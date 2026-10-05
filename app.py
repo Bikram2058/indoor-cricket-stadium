@@ -326,35 +326,38 @@ def register():
         confirm_password = request.form['confirm_password']
 
         # Password length check
-        if len(password) < 8:
+    import re
+    if (len(password) < 8
+                or not re.search(r'[A-Za-z]', password)
+                or not re.search(r'[0-9]', password)):
             return render_template(
                 'register.html',
-                error="Password must be at least 8 characters."
+                error="Password must be at least 8 characters and include letters and numbers."
             )
 
         # Email validation
-        if '@' not in email or '.' not in email:
+    if '@' not in email or '.' not in email:
             return render_template(
                 'register.html',
                 error="Please enter a valid email address."
             )
 
         # Password confirmation
-        if password != confirm_password:
+    if password != confirm_password:
             return render_template(
                 'register.html',
                 error="Passwords do not match."
             )
 
         # Hash password
-        hashed_password = generate_password_hash(password)
+    hashed_password = generate_password_hash(password)
 
-        import sqlite3
+    import sqlite3
 
-        conn = sqlite3.connect('indoor_cricket.db', timeout=10)
-        cursor = conn.cursor()
+    conn = sqlite3.connect('indoor_cricket.db', timeout=10)
+    cursor = conn.cursor()
 
-        try:
+    try:
             cursor.execute("""
                 INSERT INTO users (full_name, email, password)
                 VALUES (?, ?, ?)
@@ -368,7 +371,7 @@ def register():
                 success=True
             )
 
-        except sqlite3.IntegrityError:
+    except sqlite3.IntegrityError:
             conn.close()
 
             return render_template(
