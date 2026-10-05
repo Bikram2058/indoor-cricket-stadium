@@ -39,12 +39,6 @@
     </div>
     {% endif %}
 
-    {% if error %}
-        <p class="error-message">
-            {{ error }}
-        </p>
-    {% endif %}
-
     <form method="POST" action="/register">
 
         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
@@ -53,7 +47,15 @@
 
         <input type="email" name="email" placeholder="Email Address" required>
 
-        <input type="password" name="password" placeholder="Password" required>
+        <input type="password" name="password" id="password" placeholder="Password" required oninput="checkPassword()">
+
+        <ul id="password-rules" style="list-style:none; padding:10px; margin:5px 0; font-size:14px; text-align:left;">
+            <li id="rule-length" style="color:#999;">• At least 8 characters</li>
+            <li id="rule-upper" style="color:#999;">• One uppercase letter</li>
+            <li id="rule-lower" style="color:#999;">• One lowercase letter</li>
+            <li id="rule-number" style="color:#999;">• One number</li>
+            <li id="rule-special" style="color:#999;">• One special character (!@#$...)</li>
+        </ul>
 
         <input type="password" name="confirm_password" placeholder="Confirm Password" required>
 
@@ -74,6 +76,19 @@ Join Indoor Cricket Centre and start booking your sessions.
 <footer class="footer">
     <p>© 2026 Indoor Cricket Centre | Melbourne, Australia</p>
 </footer>
-
+<script>
+function checkPassword() {
+    var p = document.getElementById("password").value;
+    setRule("rule-length", p.length >= 8);
+    setRule("rule-upper", /[A-Z]/.test(p));
+    setRule("rule-lower", /[a-z]/.test(p));
+    setRule("rule-number", /[0-9]/.test(p));
+    setRule("rule-special", /[^A-Za-z0-9]/.test(p));
+}
+function setRule(id, ok) {
+    var el = document.getElementById(id);
+    el.style.color = ok ? "#2ecc71" : "#999";
+}
+</script>
 </body>
 </html>
