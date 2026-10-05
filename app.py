@@ -1216,10 +1216,15 @@ def change_password():
         new_password = request.form['new_password']
         confirm_password = request.form['confirm_password']
 
-        if len(new_password) < 8:
+        import re
+        if (len(new_password) < 8
+                or not re.search(r'[A-Z]', new_password)
+                or not re.search(r'[a-z]', new_password)
+                or not re.search(r'[0-9]', new_password)
+                or not re.search(r'[^A-Za-z0-9]', new_password)):
             return render_template(
                 'change_password.html',
-                error="New password must contain at least 8 characters."
+                error="Password must be 8+ characters with uppercase, lowercase, number, and special character."
             )
 
         if new_password != confirm_password:
@@ -1229,7 +1234,6 @@ def change_password():
             )
 
         import sqlite3
-
         conn = sqlite3.connect('indoor_cricket.db')
         cursor = conn.cursor()
 
@@ -1240,11 +1244,8 @@ def change_password():
 
         user = cursor.fetchone()
 
-        if not user or not check_password_hash(
-            user[0], current_password
-        ):
+        if not user or not check_password_hash(user[0], current_password):
             conn.close()
-
             return render_template(
                 'change_password.html',
                 error="Current password is incorrect."
