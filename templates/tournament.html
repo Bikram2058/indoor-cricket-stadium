@@ -36,6 +36,7 @@
         {% endif %}
 
         <form method="POST" action="/tournament">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
 
             <input type="text" name="team_name" placeholder="Team Name" required>
 

@@ -26,7 +26,7 @@ load_dotenv()
 
 app = Flask(__name__)
 
-app.secret_key = 'indoorcricketsecret'
+app.secret_key = os.getenv("SECRET_KEY")
 
 csrf = CSRFProtect(app)
 
@@ -956,7 +956,7 @@ def admin_login():
         password = request.form['password']
 
         # Admin login details
-        if email == 'admin@indoorcricket.com' and password == 'admin123':
+        if email == os.getenv("ADMIN_EMAIL") and check_password_hash(os.getenv("ADMIN_PASSWORD_HASH"), password):
             session['admin'] = True
             return redirect('/admin')
 
