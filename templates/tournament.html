@@ -38,11 +38,11 @@
         <form method="POST" action="/tournament">
             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
 
-            <input type="text" name="team_name" placeholder="Team Name" required>
+            <input type="text" name="team_name" placeholder="Team Name" maxlength="40" required>
 
-            <input type="text" name="captain_name" placeholder="Captain Name" required>
+            <input type="text" name="captain_name" placeholder="Captain Name" maxlength="50" pattern="[A-Za-z ]+" title="Letters and spaces only" required>
 
-            <input type="text" name="phone" placeholder="Phone Number" required>
+           <input type="tel" name="phone" placeholder="Phone Number" inputmode="numeric" pattern="[0-9]{8,15}" title="Enter 8 to 15 digits" oninput="this.value=this.value.replace(/[^0-9]/g,'')" required>
 
             <input type="number" name="players" placeholder="Number of Players" min="1" max="15" required>
 
