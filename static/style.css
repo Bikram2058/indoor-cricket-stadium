@@ -1,0 +1,1296 @@
+body{
+    margin:0;
+    font-family:Arial, sans-serif;
+    background:#020702;
+    color:white;
+}
+
+.topbar{
+    height:80px;
+    background:#031806;
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    padding:0 55px;
+    position:sticky;
+    top:0;
+    z-index:1000;
+}
+
+.logo{
+    font-size:28px;
+    font-weight:bold;
+}
+
+.logo span,
+.hero span,
+.promo span,
+.why span{
+    color:#65e22f;
+}
+
+nav a{
+    color:white;
+    text-decoration:none;
+    margin:0 17px;
+    font-weight:bold;
+    font-size:17px;
+}
+
+nav a:hover{
+    color:#65e22f;
+}
+
+.register-btn{
+    background:#45b52b;
+    padding:13px 25px;
+    border-radius:8px;
+}
+
+.hero{
+    height:520px;
+    background:
+        linear-gradient(to right, rgba(0,0,0,0.9), rgba(0,0,0,0.35)),
+        url("/static/images/cricket-bg.jpg");
+    background-size:cover;
+    background-position:center;
+    display:flex;
+    align-items:center;
+    padding-left:70px;
+}
+
+.hero-text h1{
+    font-size:60px;
+    line-height:1.1;
+    margin:0;
+}
+
+.hero-text p{
+    font-size:22px;
+    max-width:480px;
+}
+
+.main-btn,
+.small-btn,
+.gold-btn{
+    display:inline-block;
+    text-decoration:none;
+    color:white;
+    background:#48b82d;
+    padding:15px 35px;
+    border-radius:8px;
+    font-weight:bold;
+    margin-top:10px;
+}
+
+.promo{
+    padding:35px 70px;
+}
+
+.promo-box{
+    border:1px solid #65e22f;
+    box-shadow:0 0 20px rgba(101,226,47,0.35);
+    border-radius:18px;
+    display:grid;
+    grid-template-columns:repeat(4,1fr);
+    overflow:hidden;
+    background:linear-gradient(120deg,#061406,#102f10,#061406);
+    box-shadow:0 0 25px rgba(101,226,47,0.35);
+}
+
+.promo-box div{
+    padding:35px;
+    border-right:1px solid #2f8f20;
+}
+
+.promo-box h2{
+    font-size:32px;
+    margin:10px 0;
+}
+
+.label{
+    background:#3faf25;
+    padding:8px 15px;
+    display:inline-block;
+    font-weight:bold;
+}
+
+.gold-btn{
+    background:#b8860b;
+}
+
+.why{
+    text-align:center;
+    padding:10px 70px 60px;
+}
+
+.why h2{
+    font-size:34px;
+}
+
+.cards{
+    display:grid;
+    grid-template-columns:repeat(4,1fr);
+    gap:25px;
+}
+
+.card{
+    background:linear-gradient(145deg,#071607,#102b10);
+    border:1px solid #2f8f20;
+    border-radius:15px;
+    padding:30px;
+    font-size:35px;
+}
+
+.card h3{
+    font-size:22px;
+}
+
+.card p{
+    font-size:17px;
+    color:#ddd;
+}
+
+nav a,
+.main-btn,
+.small-btn,
+.gold-btn,
+.card,
+.promo-box div{
+    transition:0.3s ease;
+}
+
+nav a:hover{
+    color:#65e22f;
+}
+
+.main-btn:hover,
+.small-btn:hover{
+    background:#65e22f;
+    transform:scale(1.05);
+}
+
+.gold-btn:hover{
+    background:#e0a800;
+    transform:scale(1.05);
+}
+
+.card:hover{
+    transform:translateY(-10px);
+    box-shadow:0 0 25px rgba(101,226,47,0.45);
+}
+
+.promo-box div:hover{
+    background:rgba(101,226,47,0.08);
+}
+
+.promo-card{
+    position:relative;
+    overflow:hidden;
+    background-size:cover;
+    background-position:center;
+}
+
+.promo-card::before{
+    content:'';
+    position:absolute;
+    inset:0;
+    background:rgba(0,0,0,0.55);
+}
+
+.promo-card *{
+    position:relative;
+    z-index:2;
+}
+
+.offer-bg{
+    background-image:url('/static/images/offer.png');
+}
+
+.membership-bg{
+    background-image:url('/static/images/membership.png');
+}
+
+.tournament-bg{
+    background-image:url('/static/images/tournament.png');
+}
+
+.group-bg{
+    background-image:url('/static/images/groupbooking.png');
+}
+
+.promo-card{
+    position:relative;
+    overflow:hidden;
+    background-size:cover;
+    background-position:center;
+}
+
+.promo-card::before{
+    content:'';
+    position:absolute;
+    top:0;
+    left:0;
+    width:100%;
+    height:100%;
+    background:rgba(0,0,0,0.72);
+    backdrop-filter:blur(1px);
+}
+
+.promo-card *{
+    position:relative;
+    z-index:2;
+}
+
+.membership-bg{
+    background-position:center;
+}
+
+.group-bg{
+    background-position:center;
+}
+
+.tournament-bg{
+    background-position:center;
+}
+
+.promo-card{
+    transition:0.4s ease;
+}
+
+.promo-card:hover{
+    transform:scale(1.03);
+}
+
+.promo-box{
+    align-items:stretch;
+}
+
+.promo-card{
+    min-height:320px;
+    display:flex;
+    flex-direction:column;
+    justify-content:center;
+}
+
+.promo-card a{
+    margin-top:auto;
+    width:fit-content;
+}
+
+.promo-card:hover{
+    transform:translateY(-8px) scale(1.02);
+    box-shadow:0 0 30px rgba(101,226,47,0.45);
+}
+
+.label{
+    width:fit-content;
+    padding:10px 22px;
+}
+
+.small-btn,
+.gold-btn{
+    min-width:150px;
+    text-align:center;
+}
+
+.promo{
+    position:relative;
+    overflow:hidden;
+}
+
+.promo-box{
+    transition:0.5s ease;
+}
+
+.arrow{
+    position:absolute;
+    top:45%;
+    transform:translateY(-50%);
+    z-index:10;
+    width:45px;
+    height:45px;
+    border-radius:50%;
+    border:1px solid #65e22f;
+    background:rgba(0,0,0,0.7);
+    color:white;
+    font-size:25px;
+    cursor:pointer;
+}
+
+.left{
+    left:20px;
+}
+
+.right{
+    right:20px;
+}
+
+.promo-card{
+    animation: fadeUp 0.8s ease;
+}
+
+@keyframes fadeUp{
+    from{
+        opacity:0;
+        transform:translateY(25px);
+    }
+    to{
+        opacity:1;
+        transform:translateY(0);
+    }
+}
+
+.card img{
+    width:55px;
+    height:55px;
+    object-fit:contain;
+    margin-bottom:15px;
+    filter:drop-shadow(0 0 10px #65e22f);
+}
+
+.card{
+    background:linear-gradient(145deg,#071607,#0b2b0b);
+    border:1px solid #2f8f20;
+    border-radius:20px;
+    padding:30px 20px;
+    text-align:center;
+}
+
+.cards{
+    display:grid;
+    grid-template-columns:repeat(4,1fr);
+    gap:25px;
+    margin-top:40px;
+}
+
+.footer{
+    background:#021002;
+    padding:60px 8%;
+    border-top:1px solid #39ff14;
+    margin-top:80px;
+}
+
+.footer-container{
+    display:grid;
+    grid-template-columns:repeat(3,1fr);
+    gap:40px;
+}
+
+.footer-box h3{
+    color:#65e22f;
+    margin-bottom:20px;
+    font-size:26px;
+}
+
+.footer-box p,
+.footer-box a{
+    color:#ddd;
+    display:block;
+    margin-bottom:12px;
+    text-decoration:none;
+    line-height:1.7;
+}
+
+.footer-box a:hover{
+    color:#65e22f;
+}
+
+.footer-bottom{
+    text-align:center;
+    margin-top:40px;
+    padding-top:20px;
+    border-top:1px solid #1f4d1f;
+}
+
+.footer-bottom p{
+    color:#aaa;
+}
+
+.form-section{
+    width:450px;
+    margin:80px auto;
+    background:linear-gradient(145deg,#071607,#0b2b0b);
+    border:1px solid #2f8f20;
+    border-radius:20px;
+    padding:40px;
+    text-align:center;
+    box-shadow:0 0 25px rgba(101,226,47,0.2);
+}
+
+.form-section h2{
+    color:white;
+    font-size:32px;
+    margin-bottom:25px;
+}
+
+.form-section form{
+    display:flex;
+    flex-direction:column;
+    gap:15px;
+}
+
+.form-section input,
+.form-section select{
+    padding:14px;
+    border-radius:8px;
+    border:none;
+    font-size:16px;
+}
+
+.form-section button{
+    background:#43c12d;
+    color:white;
+    border:none;
+    padding:15px;
+    border-radius:8px;
+    font-size:17px;
+    font-weight:bold;
+    cursor:pointer;
+}
+
+.form-section button:hover{
+    background:#65e22f;
+}
+
+.hero p{
+    font-family:'Montserrat',sans-serif;
+    font-size:22px;
+    font-weight:500;
+    line-height:1.5;
+}
+
+.shop-section{
+    padding:80px 8%;
+    background:
+    linear-gradient(rgba(0,0,0,0.85), rgba(0,0,0,0.85)),
+    url("/static/images/shop-bg.jpg");
+
+    background-size:cover;
+    background-position:center;
+    background-attachment:fixed;
+}
+
+.shop-section h2{
+    font-size:42px;
+    color:white;
+}
+
+.shop-section p{
+    color:#ddd;
+    font-size:18px;
+}
+
+.shop-grid{
+    display:grid;
+    grid-template-columns:repeat(4,1fr);
+    gap:25px;
+    margin-top:40px;
+}
+
+.product-card{
+    background:linear-gradient(145deg,#071607,#0b2b0b);
+    border:1px solid #2f8f20;
+    border-radius:20px;
+    padding:30px;
+    transition:0.3s ease;
+}
+
+.product-card:hover{
+    transform:translateY(-10px);
+    box-shadow:0 0 25px rgba(101,226,47,0.4);
+}
+
+.product-card img{
+    width:120px;
+    height:120px;
+    object-fit:contain;
+    margin-bottom:20px;
+}
+
+.product-card h3{
+    color:white;
+}
+
+.product-card p{
+    color:#65e22f;
+    font-size:24px;
+    font-weight:bold;
+}
+
+.product-card button{
+    background:#43c12d;
+    color:white;
+    border:none;
+    padding:12px 30px;
+    border-radius:8px;
+    font-weight:bold;
+    cursor:pointer;
+}
+
+.booking-note{
+    color:#cfcfcf;
+    font-size:14px;
+    margin-top:15px;
+}
+
+#booking-success{
+    color:#65e22f;
+    font-weight:bold;
+    margin-top:15px;
+}
+
+.form-section button:hover{
+    background:#65e22f;
+    transform:scale(1.02);
+    transition:0.3s;
+}
+
+.form-section select{
+    background:#f1f1f1;
+}
+
+.booking-page{
+    background:
+    linear-gradient(rgba(0,0,0,0.75), rgba(0,0,0,0.75)),
+    url("/static/images/booking-bg.jpg");
+
+    background-size:cover;
+    background-position:center;
+    background-attachment:fixed;
+}
+
+.membership-section{
+    padding:80px 8%;
+    text-align:center;
+
+    background:
+    linear-gradient(rgba(0,0,0,0.85), rgba(0,0,0,0.85)),
+    url('/static/images/membership-bg.jpg');
+
+    background-size:cover;
+    background-position:center;
+    background-attachment:fixed;
+}
+
+.membership-subtitle{
+    color:#ddd;
+    font-size:18px;
+}
+
+.membership-cards{
+    display:grid;
+    grid-template-columns:repeat(3,1fr);
+    gap:30px;
+    margin-top:40px;
+}
+
+.plan{
+    background:linear-gradient(145deg,#071607,#0b2b0b);
+    border:1px solid #2f8f20;
+    border-radius:20px;
+    padding:40px 25px;
+    box-shadow:0 0 20px rgba(101,226,47,0.15);
+    transition:0.3s;
+}
+
+.plan:hover{
+    transform:translateY(-10px);
+    box-shadow:0 0 30px rgba(101,226,47,0.4);
+}
+
+.featured-plan{
+    border:2px solid #65e22f;
+}
+
+.plan h3{
+    font-size:32px;
+}
+
+.price{
+    color:#65e22f;
+    font-size:30px;
+    font-weight:bold;
+}
+
+.plan button{
+    background:#43c12d;
+    color:white;
+    border:none;
+    padding:14px 35px;
+    border-radius:8px;
+    font-weight:bold;
+}
+
+.popular-badge{
+    background:#65e22f;
+    color:#021002;
+    display:inline-block;
+    padding:8px 18px;
+    border-radius:20px;
+    font-weight:bold;
+    margin-bottom:15px;
+}
+
+.plan:nth-child(3){
+    border-color:#d4af37;
+    box-shadow:0 0 25px rgba(212,175,55,0.35);
+}
+
+.plan:nth-child(3) .price{
+    color:#d4af37;
+}
+
+.plan{
+    position:relative;
+    overflow:hidden;
+    background-size:cover;
+    background-position:center;
+}
+
+.plan::before{
+    content:"";
+    position:absolute;
+    top:0;
+    left:0;
+    width:100%;
+    height:100%;
+    background:rgba(0,0,0,0.75);
+}
+
+.plan *{
+    position:relative;
+    z-index:2;
+}
+
+.plan:nth-child(1){
+    background-image:url("/static/images/bronze.jpg");
+}
+
+.plan:nth-child(2){
+    background-image:url("/static/images/silver.jpg");
+}
+
+.plan:nth-child(3){
+    background-image:url("/static/images/gold.jpg");
+}
+
+.plan{
+    transition:0.4s ease;
+}
+
+.plan:hover{
+    transform:translateY(-10px) scale(1.03);
+    box-shadow:0 0 30px rgba(101,226,47,0.5);
+}
+
+.plan:nth-child(2){
+    transform:scale(1.05);
+}
+
+.plan button:hover{
+    background:#65e22f;
+    box-shadow:0 0 20px #65e22f;
+}
+
+.membership-note{
+    margin-top:40px;
+    color:#ddd;
+    font-size:18px;
+}
+
+.product-card img{
+    width:150px;
+    height:150px;
+    object-fit:contain;
+    margin-bottom:20px;
+}
+
+.product-card img{
+    transition:0.3s;
+}
+
+.product-card:hover img{
+    transform:scale(1.08);
+}
+
+.form-section textarea{
+    height:120px;
+    border-radius:8px;
+    padding:14px;
+    font-size:16px;
+    resize:none;
+}
+
+.contact-section{
+    padding:80px 8%;
+
+    background:
+    linear-gradient(rgba(0,0,0,0.82), rgba(0,0,0,0.82)),
+    url("/static/images/contact-bg.jpg");
+
+    background-size:cover;
+    background-position:center;
+    background-attachment:fixed;
+}
+
+.contact-form{
+    backdrop-filter:blur(5px);
+    background:rgba(0,30,0,0.85);
+}
+
+.contact-form{
+    width:500px;
+    margin:auto;
+    padding:40px;
+
+    background:rgba(0,30,0,0.85);
+    border:1px solid #65e22f;
+    border-radius:20px;
+
+    backdrop-filter:blur(5px);
+    box-shadow:0 0 20px rgba(101,226,47,0.3);
+}
+
+.contact-form h2{
+    text-align:center;
+    margin-bottom:30px;
+    font-size:40px;
+}
+
+.contact-form form{
+    display:flex;
+    flex-direction:column;
+    gap:20px;
+}
+
+.contact-form input,
+.contact-form textarea{
+    padding:15px;
+    border:none;
+    border-radius:10px;
+    font-size:16px;
+}
+
+.contact-form textarea{
+    height:120px;
+    resize:none;
+}
+
+.contact-form button{
+    padding:15px;
+    border:none;
+    border-radius:10px;
+    background:#65e22f;
+    color:white;
+    font-size:18px;
+    font-weight:bold;
+    cursor:pointer;
+}
+
+.form-link{
+    color:#ddd;
+    margin-top:15px;
+}
+
+.form-link a{
+    color:#65e22f;
+    text-decoration:none;
+    font-weight:bold;
+}
+
+.login-section{
+    padding:80px 8%;
+
+    background:
+    linear-gradient(rgba(0,0,0,0.82), rgba(0,0,0,0.82)),
+    url("/static/images/login-bg.jpg");
+
+    background-size:cover;
+    background-position:center;
+    background-attachment:fixed;
+}
+
+.form-section{
+    width:500px;
+    margin:auto;
+    padding:40px;
+
+    background:rgba(0,30,0,0.85);
+    border:1px solid #65e22f;
+    border-radius:20px;
+
+    backdrop-filter:blur(5px);
+    box-shadow:0 0 20px rgba(101,226,47,0.3);
+}
+
+.form-section form{
+    display:flex;
+    flex-direction:column;
+    gap:20px;
+}
+
+.form-section input{
+    padding:15px;
+    border:none;
+    border-radius:10px;
+    font-size:16px;
+}
+
+.form-section button{
+    padding:15px;
+    border:none;
+    border-radius:10px;
+    background:#65e22f;
+    color:white;
+    font-size:18px;
+    font-weight:bold;
+    cursor:pointer;
+}
+
+.register-section{
+    padding:80px 8%;
+    background:
+    linear-gradient(rgba(0,0,0,0.82), rgba(0,0,0,0.82)),
+    url("/static/images/register-bg.jpg");
+    background-size:cover;
+    background-position:center;
+    background-attachment:fixed;
+}
+
+header h1 span{
+    color:#63ff26;
+}
+
+.register-section{
+    padding:80px 8%;
+    min-height:100vh;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+
+    background:
+    linear-gradient(rgba(0,0,0,0.82), rgba(0,0,0,0.82)),
+    url("/static/images/register-bg.jpg");
+
+    background-size:cover;
+    background-position:center;
+}
+
+form button{
+    transition:0.3s;
+}
+
+form button:hover{
+    transform:translateY(-3px);
+    background:#7dff4d;
+}
+
+.register-text{
+    color:#ddd;
+    text-align:center;
+    margin-bottom:25px;
+}
+
+.topbar{
+    height:90px;
+    background:#031806;
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    padding:0 70px;
+}
+
+.logo{
+    font-size:32px;
+    font-weight:bold;
+    color:white;
+}
+
+.logo span{
+    color:#65e22f;
+}
+
+.topbar nav a{
+    color:white;
+    text-decoration:none;
+    margin:0 18px;
+    font-weight:bold;
+    font-size:18px;
+}
+
+.register-btn{
+    background:#43c12d;
+    padding:16px 32px;
+    border-radius:8px;
+}
+
+.register-section{
+    min-height:100vh;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    padding:80px 8%;
+
+    background:
+    linear-gradient(rgba(0,0,0,0.80), rgba(0,0,0,0.80)),
+    url("/static/images/register-bg.jpg");
+
+    background-size:cover;
+    background-position:center;
+    background-repeat:no-repeat;
+    background-attachment:fixed;
+}
+
+.tournament-section{
+    min-height:100vh;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+
+    background:
+    linear-gradient(rgba(0,0,0,0.80), rgba(0,0,0,0.80)),
+    url("/static/images/tournament-bg.jpg");
+
+    background-size:cover;
+    background-position:center;
+}
+
+.tournament-box{
+    width:500px;
+    padding:50px;
+    border-radius:25px;
+    background:rgba(0,40,0,0.55);
+    backdrop-filter:blur(10px);
+    border:2px solid #63ff26;
+}
+
+.tournament-box h2{
+    color:white;
+    text-align:center;
+    margin-bottom:30px;
+}
+
+.tournament-box input,
+.tournament-box select{
+    width:100%;
+    padding:18px;
+    margin-bottom:20px;
+    border:none;
+    border-radius:12px;
+    font-size:18px;
+    box-sizing:border-box;
+}
+
+.tournament-box button{
+    width:100%;
+    padding:18px;
+    background:#63ff26;
+    border:none;
+    border-radius:12px;
+    font-size:18px;
+    font-weight:bold;
+}
+
+.tournament-section{
+    display:flex;
+    justify-content:center;
+    align-items:flex-start;
+    gap:40px;
+    padding:80px;
+}
+
+.prize-box{
+    width:320px;
+    background:rgba(0,0,0,0.6);
+    padding:30px;
+    border-radius:20px;
+    border:2px solid #63ff26;
+    box-shadow:0 0 20px #63ff26;
+}
+
+.prize-box h2{
+    color:white;
+    text-align:center;
+    margin-bottom:30px;
+}
+
+.prize-card{
+    padding:20px;
+    margin-bottom:20px;
+    border-radius:15px;
+    font-size:24px;
+    font-weight:bold;
+    text-align:center;
+    color:white;
+}
+
+.first{
+    background:gold;
+    color:black;
+}
+
+.second{
+    background:silver;
+    color:black;
+}
+
+.third{
+    background:#cd7f32;
+}
+
+.success-message{
+    background:#63ff26;
+    color:black;
+    padding:15px;
+    border-radius:10px;
+    margin-bottom:20px;
+    font-weight:bold;
+    text-align:center;
+}
+
+.admin-page{
+    background:black;
+    color:white;
+    min-height:100vh;
+}
+
+.admin-section{
+    padding:50px;
+}
+
+.admin-section h1{
+    text-align:center;
+    margin-bottom:30px;
+    color:#63ff26;
+}
+
+table{
+    width:100%;
+    border-collapse:collapse;
+    background:#111;
+}
+
+th{
+    background:#63ff26;
+    color:black;
+    padding:15px;
+}
+
+td{
+    padding:12px;
+    border:1px solid #333;
+    text-align:center;
+}
+
+tr:nth-child(even){
+    background:#1a1a1a;
+}
+
+.delete-btn{
+    background:red;
+    color:white;
+    padding:8px 14px;
+    border-radius:6px;
+    text-decoration:none;
+    font-weight:bold;
+}.stats-boxes{
+    display:flex;
+    justify-content:center;
+    gap:30px;
+    margin-bottom:30px;
+}
+
+.stat-card{
+    background:#071f07;
+    border:1px solid #63ff26;
+    padding:25px 40px;
+    border-radius:15px;
+    color:#63ff26;
+    font-size:22px;
+    font-weight:bold;
+}
+
+.error-message{
+    background:red;
+    color:white;
+    padding:15px;
+    border-radius:10px;
+    text-align:center;
+    margin-bottom:20px;
+    font-weight:bold;
+}
+
+.login-btn,
+.admin-login-btn {
+    padding: 10px 18px;
+    border-radius: 6px;
+    text-decoration: none;
+    font-weight: bold;
+}
+
+.login-btn {
+    background: white;
+    color: #14532d;
+}
+
+.admin-login-btn {
+    background: #222;
+    color: white;
+}
+
+nav {
+    display: flex;
+    align-items: center;
+    gap: 28px;
+    white-space: nowrap;
+}
+
+nav a {
+    text-decoration: none;
+    color: white;
+    font-weight: bold;
+}
+
+.login-btn,
+.admin-login-btn {
+    display: inline-block;
+    padding: 12px 22px;
+    border-radius: 6px;
+    white-space: nowrap;
+}
+
+.login-btn {
+    background: #32c425;
+    color: white;
+}
+
+.admin-login-btn {
+    background: #222;
+    color: white;
+}
+
+.admin-logout-btn {
+    background: red;
+    color: white;
+    padding: 10px 18px;
+    border-radius: 6px;
+    text-decoration: none;
+    font-weight: bold;
+}
+
+/* PAYMENT SUCCESS PAGE */
+
+.payment-page {
+    margin: 0;
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background: #001a08;
+    font-family: Arial, sans-serif;
+}
+
+.payment-card {
+    width: 90%;
+    max-width: 500px;
+    padding: 50px 35px;
+    text-align: center;
+    background: #062b0d;
+    border: 1px solid #55e628;
+    border-radius: 20px;
+    box-shadow: 0 0 25px rgba(85, 230, 40, 0.25);
+}
+
+.success-icon {
+    width: 75px;
+    height: 75px;
+    margin: 0 auto 20px;
+    border-radius: 50%;
+    background: #55e628;
+    color: #062b0d;
+    font-size: 50px;
+    font-weight: bold;
+    line-height: 75px;
+}
+
+.payment-card h1 {
+    color: #55e628;
+    margin-bottom: 20px;
+}
+
+.payment-card p {
+    color: #ffffff;
+    font-size: 17px;
+    line-height: 1.6;
+}
+
+.home-button {
+    display: inline-block;
+    margin-top: 25px;
+    padding: 14px 30px;
+    background: #55e628;
+    color: #062b0d;
+    text-decoration: none;
+    font-weight: bold;
+    border-radius: 8px;
+}
+
+.home-button:hover {
+    background: #6cff3d;
+}
+
+.booking-error {
+    background: #ffdddd;
+    color: #b30000;
+    border: 1px solid #ff4d4d;
+    padding: 12px;
+    margin-bottom: 20px;
+    border-radius: 8px;
+    text-align: center;
+    font-weight: bold;
+}
+
+.success-message {
+    background: #e8ffe8;
+    color: #176b17;
+    padding: 15px;
+    border-radius: 8px;
+    text-align: center;
+    margin-bottom: 20px;
+}
+
+.success-message a {
+    color: #176b17;
+    font-weight: bold;
+}
+
+.error-message {
+    background: #ffe6e6;
+    color: #b30000;
+    padding: 12px;
+    border-radius: 8px;
+    margin-bottom: 20px;
+}
+
+/* SHOP CART BUTTON */
+
+.cart-navigation {
+    text-align: right;
+    margin: 20px 0 30px;
+}
+
+.cart-button {
+    display: inline-block;
+    background: #55d51b;
+    color: #071707;
+    padding: 14px 25px;
+    border-radius: 8px;
+    text-decoration: none;
+    font-size: 17px;
+    font-weight: bold;
+}
+
+.cart-button:hover {
+    background: #45b915;
+}

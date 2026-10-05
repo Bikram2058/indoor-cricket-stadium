@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Payment Successful</title>
+
+    <style>
+        body {
+            background: #102b20;
+            color: white;
+            font-family: Arial, sans-serif;
+            text-align: center;
+            padding: 80px 20px;
+        }
+
+        .success-container {
+            background: #1b4332;
+            padding: 45px;
+            border-radius: 15px;
+            max-width: 550px;
+            margin: auto;
+        }
+
+        .success-icon {
+            font-size: 65px;
+            color: #64dd24;
+        }
+
+        h1 {
+            color: #64dd24;
+        }
+
+        p {
+            font-size: 18px;
+            line-height: 1.7;
+        }
+
+        .order-id {
+            background: #102b20;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 25px 0;
+        }
+
+        .btn {
+            display: inline-block;
+            background: #64dd24;
+            color: black;
+            padding: 14px 25px;
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: bold;
+            margin: 10px;
+        }
+
+        .btn:hover {
+            background: #50b91c;
+        }
+    </style>
+
+</head>
+
+<body>
+
+    <div class="success-container">
+
+        <div class="success-icon">✓</div>
+
+        <h1>Payment Successful!</h1>
+
+        <p>
+            Thank you for shopping with
+            <strong>Indoor Cricket Centre.</strong>
+        </p>
+
+        <p>
+            Your payment has been received and
+            your order has been confirmed.
+        </p>
+
+        <div class="order-id">
+            <h2>Order Number: #{{ order_id }}</h2>
+        </div>
+
+        <p>
+            You can continue shopping or
+            return to your dashboard.
+        </p>
+
+        <a href="/shop" class="btn">
+            Continue Shopping
+        </a>
+
+        <a href="{{ url_for('user_dashboard') }}" class="btn">
+    My Dashboard
+</a>
+        </a>
+
+    </div>
+
+</body>
+</html>

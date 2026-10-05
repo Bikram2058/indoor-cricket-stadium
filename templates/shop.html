@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Cricket Shop</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+
+<header class="topbar">
+    <div class="logo">🏏 INDOOR <span>CRICKET CENTRE</span></div>
+
+    <nav>
+        <a href="/">Home</a>
+        <a href="/booking">Booking</a>
+        <a href="/membership">Membership</a>
+        <a href="/shop">Shop</a>
+        <a href="/contact">Contact</a>
+        <a href="/login">Login</a>
+        <a class="register-btn" href="/register">Register</a>
+    </nav>
+</header>
+
+<section class="shop-section">
+    <h2>Cricket Equipment Shop</h2>
+    <p>Buy quality cricket gear for training, matches, and tournaments.</p>
+
+    <div class="cart-navigation">
+    <a href="/cart" class="cart-button">
+        🛒 View Cart
+    </a>
+</div>
+
+    <div class="shop-grid">
+
+        <div class="product-card">
+            <img src="/static/images/bat.png">
+            <h3>Cricket Bat</h3>
+            <p>$120</p>
+            <form action="/add-to-cart" method="POST">
+    <input type="hidden"
+           name="csrf_token"
+           value="{{ csrf_token() }}">
+
+    <input type="hidden"
+           name="product_id"
+           value="1">
+
+    <button type="submit">
+        Add to Cart
+    </button>
+</form>
+        </div>
+
+        <div class="product-card">
+            <img src="/static/images/ball.png">
+            <h3>Cricket Ball</h3>
+            <p>$25</p>
+            <form action="/add-to-cart" method="POST">
+    <input type="hidden"
+           name="csrf_token"
+           value="{{ csrf_token() }}">
+
+    <input type="hidden"
+           name="product_id"
+           value="2">
+
+    <button type="submit">
+        Add to Cart
+    </button>
+</form>
+        </div>
+
+        <div class="product-card">
+            <img src="/static/images/gloves.png">
+            <h3>Batting Gloves</h3>
+            <p>$45</p>
+            <form action="/add-to-cart" method="POST">
+    <input type="hidden"
+           name="csrf_token"
+           value="{{ csrf_token() }}">
+
+    <input type="hidden"
+           name="product_id"
+           value="3">
+
+    <button type="submit">
+        Add to Cart
+    </button>
+</form>
+        </div>
+
+        <div class="product-card">
+            <img src="/static/images/pads.png">
+            <h3>Leg Pads</h3>
+            <p>$80</p>
+            <form action="/add-to-cart" method="POST">
+    <input type="hidden"
+           name="csrf_token"
+           value="{{ csrf_token() }}">
+
+    <input type="hidden"
+           name="product_id"
+           value="4">
+
+    <button type="submit">
+        Add to Cart
+    </button>
+</form>
+        </div>
+
+    </div>
+</section>
+
+<footer class="footer">
+    <p>© 2026 Indoor Cricket Centre | Melbourne, Australia</p>
+</footer>
+
+</body>
+</html>

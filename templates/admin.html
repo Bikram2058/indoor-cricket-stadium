@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Admin Dashboard</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+
+<body class="admin-page">
+
+    <header class="topbar">
+        <div class="logo">
+            🏏 INDOOR <span>CRICKET CENTRE</span>
+        </div>
+
+        <nav>
+            <a href="/">Home</a>
+            <a href="/booking">Booking</a>
+            
+            {% if session.get('admin') %}
+                <a href="/admin-logout" class="admin-logout-btn">Logout</a>
+            {% endif %}
+        </nav>
+    </header>
+
+    <section class="admin-section">
+
+        <h1>Booking Records</h1>
+
+        <div class="stats-boxes">
+            <div class="stat-card">Total Bookings: {{ bookings|length }}</div>
+            <div class="stat-card">Total Tournaments: {{ tournaments|length }}</div>
+            <div class="stat-card">Total Revenue: ${{ (bookings|length * 40) + (tournaments|length * 100) }}</div>
+        </div>
+
+        <table>
+
+            <tr>
+                <th>ID</th>
+                <th>Name</th>
+                <th>Phone</th>
+                <th>Email</th>
+                <th>Date</th>
+                <th>Time</th>
+                <th>Lane</th>
+                <th>Duration</th>
+                <th>Member</th>
+                <th>Players</th>
+                <th>Action</th>
+            </tr>
+
+            {% for booking in bookings %}
+
+            <tr>
+                <td>{{ booking[0] }}</td>
+                <td>{{ booking[1] }}</td>
+                <td>{{ booking[2] }}</td>
+                <td>{{ booking[3] }}</td>
+                <td>{{ booking[4] }}</td>
+                <td>{{ booking[5] }}</td>
+                <td>{{ booking[6] }}</td>
+                <td>{{ booking[7] }}</td>
+                <td>{{ booking[8] }}</td>
+                <td>{{ booking[9] }}</td>
+                <td>
+                    <a class="delete-btn" href="/delete_booking/{{ booking[0] }}">Delete</a>
+                </td>
+            </tr>
+
+            {% endfor %}
+
+        </table>
+
+        <h1>Tournament Records</h1>
+
+<table>
+    <tr>
+        <th>ID</th>
+        <th>Team Name</th>
+        <th>Captain</th>
+        <th>Phone</th>
+        <th>Players</th>
+        <th>Date</th>
+        <th>Type</th>
+        <th>Entry Fee</th>
+        <th>Action</th>
+    </tr>
+
+    {% for tournament in tournaments %}
+    <tr>
+        <td>{{ tournament[0] }}</td>
+        <td>{{ tournament[1] }}</td>
+        <td>{{ tournament[2] }}</td>
+        <td>{{ tournament[3] }}</td>
+        <td>{{ tournament[4] }}</td>
+        <td>{{ tournament[5] }}</td>
+        <td>{{ tournament[6] }}</td>
+        <td>{{ tournament[7] }}</td>
+
+        <td>
+        
+        <a href="{{ url_for('delete_tournament', id=tournament[0]) }}"
+            class="delete-btn">
+             Delete
+        </a>
+
+        </td>
+        
+    </tr>
+    {% endfor %}
+    </table>
+
+        
+
+    </section>
+
+</body>
+</html>

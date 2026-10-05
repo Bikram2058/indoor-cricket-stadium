@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Shopping Cart</title>
+
+    <style>
+        body {
+            background: #071707;
+            color: white;
+            font-family: Arial, sans-serif;
+            margin: 0;
+        }
+
+        .container {
+            max-width: 1000px;
+            margin: 70px auto;
+            padding: 25px;
+        }
+
+        h1 {
+            color: #64dd24;
+            text-align: center;
+        }
+
+        .cart-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 35px;
+            background: #102b10;
+        }
+
+        .cart-table th,
+        .cart-table td {
+            padding: 18px;
+            text-align: left;
+            border-bottom: 1px solid #315031;
+        }
+
+        .cart-table th {
+            background: #245024;
+            color: #64dd24;
+        }
+
+        .product-image {
+            width: 75px;
+            height: 75px;
+            object-fit: contain;
+        }
+
+        .total {
+            font-size: 24px;
+            text-align: right;
+            margin-top: 30px;
+        }
+
+        .btn {
+            display: inline-block;
+            background: #64dd24;
+            color: black;
+            padding: 14px 25px;
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: bold;
+            margin-top: 25px;
+        }
+
+        .table-wrapper {
+            overflow-x: auto;
+        }
+
+        .checkout-btn {
+    border: none;
+    cursor: pointer;
+    font-size: 17px;
+    background: #64dd24;
+    color: black;
+}
+
+.checkout-btn:hover {
+    background: #50b91c;
+}
+    </style>
+
+</head>
+
+<body>
+
+    <div class="container">
+
+        <h1>🛒 My Shopping Cart</h1>
+
+        {% if cart_items %}
+
+        <div class="table-wrapper">
+
+            <table class="cart-table">
+
+                <tr>
+                    <th>Product</th>
+                    <th>Name</th>
+                    <th>Price</th>
+                    <th>Quantity</th>
+                    <th>Subtotal</th>
+                    <th>Action</th>
+                </tr>
+
+                {% for item in cart_items %}
+
+                <tr>
+                    <td>
+                        <img
+                            src="{{ url_for('static', filename='images/' + item.image) }}"
+                            class="product-image"
+                            alt="{{ item.name }}">
+                    </td>
+
+                    <td>{{ item.name }}</td>
+
+                    <td>${{ "%.2f"|format(item.price) }}</td>
+
+                    <td>
+    <form action="/update-cart" method="POST">
+        <input type="hidden" name="csrf_token"
+               value="{{ csrf_token() }}">
+
+        <input type="hidden" name="product_id"
+               value="{{ item.id }}">
+
+        <button type="submit" name="action" value="decrease">−</button>
+
+        {{ item.quantity }}
+
+        <button type="submit" name="action" value="increase">+</button>
+    </form>
+</td>
+
+                    <td>${{ "%.2f"|format(item.subtotal) }}</td>
+
+                    <td>
+    <form action="/update-cart" method="POST">
+        <input type="hidden" name="csrf_token"
+               value="{{ csrf_token() }}">
+
+        <input type="hidden" name="product_id"
+               value="{{ item.id }}">
+
+        <button type="submit" name="action" value="remove">
+            Remove
+        </button>
+    </form>
+</td>
+                </tr>
+
+                {% endfor %}
+
+            </table>
+
+        </div>
+
+        <div class="total">
+            Total: ${{ "%.2f"|format(total) }}
+        </div>
+
+        {% else %}
+
+        <h2>Your shopping cart is empty.</h2>
+
+        {% endif %}
+
+        {% if cart_items %}
+
+<form action="/shop-checkout" method="POST">
+
+    <input type="hidden"
+           name="csrf_token"
+           value="{{ csrf_token() }}">
+
+    <button type="submit" class="btn checkout-btn">
+        Proceed to Checkout
+    </button>
+
+</form>
+
+{% endif %}
+
+        <a href="/shop" class="btn">Continue Shopping</a>
+
+    </div>
+
+</body>
+</html>

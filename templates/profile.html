@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1.0">
+
+    <title>My Profile - Indoor Cricket Centre</title>
+
+    <link rel="stylesheet"
+          href="{{ url_for('static', filename='style.css') }}">
+
+    <style>
+        body {
+            background: #071707;
+            color: white;
+            font-family: Arial, sans-serif;
+            margin: 0;
+        }
+
+        .profile-container {
+            max-width: 550px;
+            margin: 80px auto;
+            padding: 35px;
+            background: #102b10;
+            border: 1px solid #64dd24;
+            border-radius: 12px;
+        }
+
+        h1 {
+            color: #64dd24;
+            text-align: center;
+        }
+
+        .profile-info {
+            margin-top: 30px;
+            line-height: 2;
+        }
+
+        .profile-info p {
+            padding: 12px;
+            background: #183818;
+            border-radius: 8px;
+        }
+
+        .back-btn {
+            display: block;
+            background: #64dd24;
+            color: #071707;
+            text-decoration: none;
+            text-align: center;
+            padding: 14px;
+            border-radius: 8px;
+            font-weight: bold;
+            margin-top: 25px;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="profile-container">
+
+        <h1>My Profile</h1>
+
+    <div class="profile-info">
+
+    <p>
+        <strong>Full Name:</strong>
+        {{ user['full_name'] }}
+    </p>
+
+    <p>
+        <strong>Email:</strong>
+        {{ user['email'] }}
+    </p>
+
+    <p>
+        <strong>Phone Number:</strong>
+        {{ user['phone'] or 'Not provided' }}
+    </p>
+
+    <p>
+        <strong>Date of Birth:</strong>
+        {{ user['date_of_birth'] or 'Not provided' }}
+    </p>
+
+    <p>
+        <strong>Gender:</strong>
+        {{ user['gender'] or 'Not provided' }}
+    </p>
+
+    <p>
+        <strong>Address:</strong>
+        {{ user['address'] or 'Not provided' }}
+    </p>
+
+</div>
+
+<a href="/edit-profile" class="back-btn">
+    Edit Profile
+</a>
+
+<a href="/dashboard" class="back-btn">
+    Back to Dashboard
+</a>
+
+</div>
+
+</body>
+</html>

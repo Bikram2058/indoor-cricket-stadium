@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1.0">
+
+    <title>Edit Profile - Indoor Cricket Centre</title>
+
+    <style>
+        body {
+            background: #071707;
+            color: white;
+            font-family: Arial, sans-serif;
+        }
+
+        .profile-container {
+            max-width: 550px;
+            margin: 60px auto;
+            padding: 35px;
+            background: #102b10;
+            border: 1px solid #64dd24;
+            border-radius: 12px;
+        }
+
+        h1 {
+            color: #64dd24;
+            text-align: center;
+        }
+
+        label {
+            display: block;
+            margin-top: 20px;
+        }
+
+        input, select, textarea {
+            width: 100%;
+            box-sizing: border-box;
+            padding: 13px;
+            margin-top: 8px;
+            border: none;
+            border-radius: 7px;
+        }
+
+        button {
+            width: 100%;
+            padding: 15px;
+            margin-top: 25px;
+            background: #64dd24;
+            color: #071707;
+            border: none;
+            border-radius: 8px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        .back-btn {
+            display: block;
+            text-align: center;
+            margin-top: 20px;
+            color: #64dd24;
+        }
+    </style>
+
+</head>
+
+<body>
+
+    <div class="profile-container">
+
+        <h1>Edit Profile</h1>
+
+        <form method="POST" action="/edit-profile">
+
+            <input type="hidden"
+                   name="csrf_token"
+                   value="{{ csrf_token() }}">
+
+            <label>Full Name</label>
+            <input type="text"
+                   name="full_name"
+                   value="{{ user['full_name'] }}"
+                   required>
+
+            <label>Email Address</label>
+            <input type="email"
+                   value="{{ user['email'] }}"
+                   disabled>
+
+            <label>Phone Number</label>
+            <input type="tel"
+                   name="phone"
+                   pattern="[0-9]{1,15}"
+                   maxlength="15"
+                   value="{{ user['phone'] or '' }}">
+
+            <label>Date of Birth</label>
+            <input type="date"
+                   name="date_of_birth"
+                   value="{{ user['date_of_birth'] or '' }}">
+
+            <label>Gender (Optional)</label>
+            <select name="gender">
+                <option value="">Prefer not to say</option>
+
+                {% for option in ['Male', 'Female', 'Other'] %}
+                <option value="{{ option }}"
+                    {% if user['gender'] == option %}
+                        selected
+                    {% endif %}>
+                    {{ option }}
+                </option>
+                {% endfor %}
+            </select>
+
+            <label>Address (Optional)</label>
+            <textarea name="address"
+                      rows="3">{{ user['address'] or '' }}</textarea>
+
+            <button type="submit">
+                Save Changes
+            </button>
+
+        </form>
+
+        <a href="/profile" class="back-btn">
+            Back to Profile
+        </a>
+
+    </div>
+
+</body>
+</html>

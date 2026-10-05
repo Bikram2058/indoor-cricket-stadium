@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Book Cricket Arena</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+
+<script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+</head>
+<body class="booking-page">
+
+<header class="topbar">
+    <div class="logo">🏏 INDOOR <span>CRICKET CENTRE</span></div>
+
+    <nav>
+        <a href="/">Home</a>
+        <a href="/booking">Booking</a>
+        <a href="/membership">Membership</a>
+        <a href="/shop">Shop</a>
+        <a href="/contact">Contact</a>
+        <a href="/login">Login</a>
+        <a class="register-btn" href="/register">Register</a>
+    </nav>
+</header>
+
+<section class="form-section">
+    <h2>Book Your Cricket Lane</h2>
+
+    {% if error %}
+    <div class="booking-error">
+        {{ error }}
+    </div>
+    {% endif %}
+
+    <form method="POST" action="/booking">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    {% if success %}
+    <p class="success-message">{{ success }}</p>
+    {% endif %}
+    
+        <input type="text" name="full_name" placeholder="Full Name" required>
+        <input type="tel"
+            name="phone"
+            placeholder="Enter phone number"
+            inputmode="numeric"
+            pattern="[0-9]+"
+            oninput="this.value=this.value.replace(/[^0-9]/g,'')"
+            required>
+        <input type="email" name="email" placeholder="Email Address (Optional)">
+        
+        
+
+        <select name="lane" id="lane" required>
+            <option value="">Select Lane</option>
+            <option>Lane 1</option>
+            <option>Lane 2</option>
+            <option>Lane 3</option>
+            <option>Lane 4</option>
+        </select>
+
+        <input type="time"
+               name="booking_time"
+               id="booking_time"
+               required>
+
+               <input type="text"
+       name="booking_date"
+       id="booking_date"
+       placeholder="Select Available Date"
+       required>
+
+        <p id="availability-message"></p>
+
+        <select name="duration" required>
+    <option value="">Select Duration</option>
+    <option>30 Minutes - $25</option>
+    <option>1 Hour - $40</option>
+    <option>2 Hours - $75</option>
+</select>
+
+<select name="member" required>
+    <option value="">Are you a member?</option>
+    <option>Yes</option>
+    <option>No</option>
+</select>
+
+        <input type="number" name="players" placeholder="Number of Players" min="1" max="8" required>
+
+    <button type="submit" class="booking-btn">
+        Confirm & Pay
+    </button>
+
+        <p class="booking-note">You will receive confirmation after submitting your booking.</p>
+
+    </form>
+
+</section>
+
+<script>
+function showBookingMessage(event){
+    event.preventDefault();
+    document.getElementById("booking-success").innerHTML =
+    "✅ Your booking request has been submitted successfully!";
+}
+</script>   
+
+<footer class="footer">
+    <p>© 2026 Indoor Cricket Centre | Melbourne, Australia</p>
+</footer>
+
+<script>
+const dateInput = document.getElementById('booking_date');
+const timeInput = document.getElementById('booking_time');
+const laneInput = document.getElementById('lane');
+const message = document.getElementById('availability-message');
+
+// Allow booking from today up to 1 year ahead
+const today = new Date();
+
+const maxDate = new Date();
+maxDate.setFullYear(today.getFullYear() + 1);
+
+function formatDate(date) {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+
+    return `${year}-${month}-${day}`;
+}
+
+dateInput.min = formatDate(today);
+dateInput.max = formatDate(maxDate);
+
+async function checkAvailability() {
+
+    const date = dateInput.value;
+    const time = timeInput.value;
+    const lane = laneInput.value;
+
+    // Wait until all three are selected
+    if (!date || !time || !lane) {
+        message.textContent = '';
+        return;
+    }
+
+    message.textContent = 'Checking availability...';
+    message.style.color = 'white';
+
+    try {
+        const response = await fetch(
+            `/check-availability?date=${encodeURIComponent(date)}&time=${encodeURIComponent(time)}&lane=${encodeURIComponent(lane)}`
+        );
+
+        const data = await response.json();
+
+        if (data.available) {
+            message.textContent = '✓ Lane is available';
+            message.style.color = '#55e628';
+        } else {
+            message.textContent = '✕ ' + data.message;
+            message.style.color = '#ff4d4d';
+        }
+
+    } catch (error) {
+        message.textContent = 'Unable to check availability.';
+        message.style.color = '#ff4d4d';
+    }
+}
+
+dateInput.addEventListener('change', checkAvailability);
+timeInput.addEventListener('change', checkAvailability);
+laneInput.addEventListener('change', checkAvailability);
+
+// Disable time and date initially
+timeInput.disabled = true;
+dateInput.disabled = true;
+
+laneInput.addEventListener("change", function () {
+
+    if (this.value !== "") {
+        // Lane selected - allow time selection
+        timeInput.disabled = false;
+
+        // Date stays disabled until a time is selected
+        dateInput.disabled = true;
+        dateInput.value = "";
+    } else {
+        timeInput.disabled = true;
+        dateInput.disabled = true;
+
+        timeInput.value = "";
+        dateInput.value = "";
+    }
+});
+
+timeInput.addEventListener("change", function () {
+
+    if (this.value !== "" && laneInput.value !== "") {
+        dateInput.disabled = false;
+    } else {
+        dateInput.disabled = true;
+        dateInput.value = "";
+    }
+});
+
+let bookingCalendar = flatpickr("#booking_date", {
+    dateFormat: "Y-m-d",
+    minDate: "today",
+    maxDate: new Date().fp_incr(365),
+    disableMobile: true,
+    clickOpens: false
+});
+
+async function loadAvailableDates() {
+
+    const lane = laneInput.value;
+    const time = timeInput.value;
+
+    if (!lane || !time) {
+        bookingCalendar.set("disable", []);
+        bookingCalendar.clear();
+        return;
+    }
+
+    try {
+        const response = await fetch(
+            `/unavailable-dates?lane=${encodeURIComponent(lane)}&time=${encodeURIComponent(time)}`
+        );
+
+        const data = await response.json();
+
+        // Disable dates already booked for this lane + time
+        bookingCalendar.set(
+            "disable",
+            data.unavailable_dates
+        );
+
+        bookingCalendar.clear();
+
+        // Allow calendar to open
+        bookingCalendar.set("clickOpens", true);
+
+        message.textContent =
+            "Select an available date.";
+
+        message.style.color = "#64dd24";
+
+    } catch (error) {
+
+        console.error(error);
+
+        message.textContent =
+            "Unable to load available dates.";
+
+        message.style.color = "red";
+    }
+}
+
+timeInput.addEventListener("change", loadAvailableDates);
+laneInput.addEventListener("change", function () {
+
+    bookingCalendar.clear();
+    bookingCalendar.set("clickOpens", false);
+
+});
+
+</script>
+
+
+</body>
+</html>

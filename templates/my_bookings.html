@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>My Bookings - Indoor Cricket Centre</title>
+
+    <style>
+        body {
+            background: #071707;
+            color: white;
+            font-family: Arial, sans-serif;
+            margin: 0;
+        }
+
+        .container {
+            max-width: 1100px;
+            margin: 60px auto;
+            padding: 30px;
+        }
+
+        h1 {
+            color: #64dd24;
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        .booking-table {
+            width: 100%;
+            border-collapse: collapse;
+            background: #102b10;
+            border-radius: 12px;
+            overflow: hidden;
+        }
+
+        .booking-table th {
+            background: #245024;
+            color: #64dd24;
+            padding: 18px;
+            text-align: left;
+        }
+
+        .booking-table td {
+            padding: 18px;
+            border-bottom: 1px solid #315031;
+        }
+
+        .booking-table tr:hover {
+            background: #193b19;
+        }
+
+        .empty-message {
+            text-align: center;
+            background: #102b10;
+            padding: 40px;
+            border-radius: 12px;
+        }
+
+        .btn {
+            display: inline-block;
+            background: #64dd24;
+            color: #071707;
+            padding: 14px 24px;
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: bold;
+            margin-top: 25px;
+            margin-right: 10px;
+        }
+
+        .btn:hover {
+            background: #4caf20;
+        }
+
+        .table-wrapper {
+            overflow-x: auto;
+        }
+
+        .status-upcoming {
+            color: #64dd24;
+            font-weight: bold;
+        }
+
+        .status-completed {
+            color: #aaaaaa;
+            font-weight: bold;
+        }
+        .status-upcoming {
+    color: #64dd24;
+    font-weight: bold;
+}
+
+.status-progress {
+    color: #ffcc00;
+    font-weight: bold;
+}
+
+.status-completed {
+    color: #aaaaaa;
+    font-weight: bold;
+}
+
+    </style>
+
+</head>
+
+<body>
+
+    <div class="container">
+
+        <h1>My Bookings</h1>
+
+        {% if bookings %}
+
+        <div class="table-wrapper">
+
+            <table class="booking-table">
+
+                <thead>
+                    <tr>
+                        <th>Booking ID</th>
+                        <th>Date</th>
+                        <th>Time</th>
+                        <th>Lane</th>
+                        <th>Duration</th>
+                        <th>Players</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+
+                <tbody>
+
+                    {% for booking in bookings %}
+
+                    <tr>
+                        <td>{{ booking['id'] }}</td>
+
+                        <td>{{ booking['booking_date'] }}</td>
+
+                        <td>{{ booking['booking_time'] }}</td>
+
+                        <td>{{ booking['lane'] }}</td>
+
+                        <td>{{ booking['duration'] }}</td>
+
+                        <td>{{ booking['players'] }}</td>
+
+                        <td>
+    {% if booking['status'] == 'Upcoming' %}
+
+        <span class="status-upcoming">
+            Upcoming
+        </span>
+
+    {% elif booking['status'] == 'In Progress' %}
+
+        <span class="status-progress">
+            In Progress
+        </span>
+
+    {% else %}
+
+        <span class="status-completed">
+            Completed
+        </span>
+
+    {% endif %}
+</td>
+
+                    </tr>
+
+                    {% endfor %}
+
+                </tbody>
+
+            </table>
+
+        </div>
+
+        {% else %}
+
+        <div class="empty-message">
+
+            <h2>No Bookings Found</h2>
+
+            <p>
+                You haven't made any bookings associated
+                with this account yet.
+            </p>
+
+        </div>
+
+        {% endif %}
+
+        <a href="/booking" class="btn">
+            Book a Lane
+        </a>
+
+        <a href="/dashboard" class="btn">
+            Back to Dashboard
+        </a>
+
+    </div>
+
+</body>
+</html>
