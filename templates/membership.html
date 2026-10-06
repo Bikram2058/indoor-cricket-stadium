@@ -31,7 +31,11 @@
             <p class="price">$25/month</p>
             <p>✔ 2 bookings per week</p>
             <p>✔ Basic lane access</p>
-            <button>Choose Plan</button>
+            <form action="/create-membership-checkout" method="POST">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <input type="hidden" name="plan" value="Bronze">
+    <button type="submit">Choose Plan</button>
+</form>
         </div>
 
         <div class="plan featured-plan">
@@ -40,7 +44,11 @@
             <p class="price">$40/month</p>
             <p>✔ 4 bookings per week</p>
             <p>✔ Priority booking</p>
-            <button>Choose Plan</button>
+            <form action="/create-membership-checkout" method="POST">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <input type="hidden" name="plan" value="Silver">
+    <button type="submit">Choose Plan</button>
+</form>
         </div>
 
         <div class="plan">
@@ -48,7 +56,11 @@
             <p class="price">$55/month</p>
             <p>✔ Unlimited bookings</p>
             <p>✔ Tournament discounts</p>
-            <button>Choose Plan</button>
+            <form action="/create-membership-checkout" method="POST">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <input type="hidden" name="plan" value="Gold">
+    <button type="submit">Choose Plan</button>
+</form>
         </div>
 
     </div>

@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Membership Activated</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+
+<body>
+
+<header class="topbar">
+    <div class="logo">🏏 INDOOR <span>CRICKET CENTRE</span></div>
+
+    <nav>
+        <a href="/">Home</a>
+        <a href="/booking">Booking</a>
+        <a href="/membership">Membership</a>
+        <a href="/shop">Shop</a>
+        <a href="/contact">Contact</a>
+    </nav>
+</header>
+
+<section class="membership-section">
+
+    <div class="plan featured-plan">
+
+        <h2>✓ Membership Activated!</h2>
+
+        <h3>{{ plan }} Membership</h3>
+
+        <p class="price">${{ "%.2f"|format(price) }}</p>
+
+        <p>Your payment was successful.</p>
+
+        <p>
+            Your membership is active until:
+            <strong>{{ end_date }}</strong>
+        </p>
+
+        <br>
+
+        <a href="/dashboard">
+            <button>Go to Dashboard</button>
+        </a>
+
+    </div>
+
+</section>
+
+<footer class="footer">
+    <p>© 2026 Indoor Cricket Centre | Melbourne, Australia</p>
+</footer>
+
+</body>
+</html>

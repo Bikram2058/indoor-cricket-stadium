@@ -12,7 +12,7 @@ from datetime import timedelta
 
 from werkzeug.security import generate_password_hash, check_password_hash
 
-from flask import Flask, render_template, request, redirect, session
+from flask import Flask, render_template, request, redirect, session, url_for
 
 from flask_wtf.csrf import CSRFProtect
 
@@ -497,6 +497,118 @@ def membership():
         return redirect('/login')
     
     return render_template('membership.html')
+
+@app.route('/create-membership-checkout', methods=['POST'])
+def create_membership_checkout():
+
+    if 'user' not in session:
+        return redirect('/login')
+
+    plan = request.form.get('plan')
+
+    membership_plans = {
+        'Bronze': 2500,
+        'Silver': 4000,
+        'Gold': 5500
+    }
+
+    amount = membership_plans.get(plan)
+
+    if amount is None:
+        return "Invalid membership plan", 400
+
+    checkout_session = stripe.checkout.Session.create(
+        payment_method_types=['card'],
+        line_items=[{
+            'price_data': {
+                'currency': 'aud',
+                'product_data': {
+                    'name': f'{plan} Membership'
+                },
+                'unit_amount': amount,
+            },
+            'quantity': 1,
+        }],
+        mode='payment',
+        success_url=url_for(
+            'membership_payment_success',
+            _external=True
+        ) + '?session_id={CHECKOUT_SESSION_ID}',
+        cancel_url=url_for(
+            'membership',
+            _external=True
+        )
+    )
+
+    session['membership_plan'] = plan
+
+    return redirect(checkout_session.url, code=303)
+
+@app.route('/membership-payment-success')
+def membership_payment_success():
+
+    if 'user' not in session:
+        return redirect('/login')
+
+    stripe_session_id = request.args.get('session_id')
+
+    if not stripe_session_id:
+        return "Invalid payment session", 400
+
+    # Get payment information from Stripe
+    checkout_session = stripe.checkout.Session.retrieve(stripe_session_id)
+
+    # Make sure payment was actually successful
+    if checkout_session.payment_status != 'paid':
+        return "Payment not completed", 400
+
+    plan = session.get('membership_plan')
+
+    membership_prices = {
+        'Bronze': 25.00,
+        'Silver': 40.00,
+        'Gold': 55.00
+    }
+
+    price = membership_prices.get(plan)
+
+    if price is None:
+        return "Invalid membership plan", 400
+
+    from datetime import datetime, timedelta
+    import sqlite3
+
+    start_date = datetime.now()
+    end_date = start_date + timedelta(days=30)
+
+    conn = sqlite3.connect('indoor_cricket.db')
+    cursor = conn.cursor()
+
+    cursor.execute("""
+        INSERT INTO memberships
+        (user_email, plan, price, start_date, end_date, status, stripe_session_id)
+        VALUES (?, ?, ?, ?, ?, ?, ?)
+    """, (
+        session['user'],
+        plan,
+        price,
+        start_date.strftime('%Y-%m-%d'),
+        end_date.strftime('%Y-%m-%d'),
+        'Active',
+        stripe_session_id
+    ))
+
+    conn.commit()
+    conn.close()
+
+    session.pop('membership_plan', None)
+
+    return render_template(
+        'membership_payment_success.html',
+        plan=plan,
+        price=price,
+        end_date=end_date.strftime('%d %B %Y')
+    )
 
 @app.route('/contact')
 def contact():

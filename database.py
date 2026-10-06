@@ -79,6 +79,20 @@ for column, data_type in new_columns.items():
             f"ALTER TABLE users ADD COLUMN {column} {data_type}"
         )
 
+# Membership table
+cursor.execute("""
+CREATE TABLE IF NOT EXISTS memberships (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_email TEXT NOT NULL,
+    plan TEXT NOT NULL,
+    price REAL NOT NULL,
+    start_date TEXT NOT NULL,
+    end_date TEXT NOT NULL,
+    status TEXT NOT NULL DEFAULT 'Active',
+    stripe_session_id TEXT
+)
+""")
+
 conn.commit()
 conn.close()
 
