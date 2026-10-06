@@ -26,7 +26,7 @@ load_dotenv()
 
 app = Flask(__name__)
 
-app.secret_key = 'indoorcricketsecret'
+app.secret_key = os.getenv("SECRET_KEY")
 
 csrf = CSRFProtect(app)
 
@@ -319,17 +319,23 @@ def login():
 @app.route('/register', methods=['GET', 'POST'])
 def register():
 
-    if request.method == 'POST':
+       if request.method == 'POST':
         full_name = request.form['full_name']
         email = request.form['email']
         password = request.form['password']
         confirm_password = request.form['confirm_password']
 
-        # Password length check
-        if len(password) < 8:
+        # Password strength check
+                # Password strength check
+        import re
+        if (len(password) < 8
+                or not re.search(r'[A-Z]', password)
+                or not re.search(r'[a-z]', password)
+                or not re.search(r'[0-9]', password)
+                or not re.search(r'[^A-Za-z0-9]', password)):
             return render_template(
                 'register.html',
-                error="Password must be at least 8 characters."
+                error="Password must be 8+ characters with uppercase, lowercase, number, and special character."
             )
 
         # Email validation
@@ -350,7 +356,6 @@ def register():
         hashed_password = generate_password_hash(password)
 
         import sqlite3
-
         conn = sqlite3.connect('indoor_cricket.db', timeout=10)
         cursor = conn.cursor()
 
@@ -359,7 +364,6 @@ def register():
                 INSERT INTO users (full_name, email, password)
                 VALUES (?, ?, ?)
             """, (full_name, email, hashed_password))
-
             conn.commit()
             conn.close()
 
@@ -370,14 +374,12 @@ def register():
 
         except sqlite3.IntegrityError:
             conn.close()
-
             return render_template(
                 'register.html',
                 error="Email already registered."
             )
 
-    return render_template('register.html')
-
+       return render_template('register.html')
 @app.route('/create-checkout-session', methods=['GET'])
 def create_checkout_session():
 
@@ -1068,7 +1070,7 @@ def admin_login():
         password = request.form['password']
 
         # Admin login details
-        if email == 'admin@indoorcricket.com' and password == 'admin123':
+        if email == os.getenv("ADMIN_EMAIL") and check_password_hash(os.getenv("ADMIN_PASSWORD_HASH"), password):
             session['admin'] = True
             return redirect('/admin')
 
@@ -1326,10 +1328,15 @@ def change_password():
         new_password = request.form['new_password']
         confirm_password = request.form['confirm_password']
 
-        if len(new_password) < 8:
+        import re
+        if (len(new_password) < 8
+                or not re.search(r'[A-Z]', new_password)
+                or not re.search(r'[a-z]', new_password)
+                or not re.search(r'[0-9]', new_password)
+                or not re.search(r'[^A-Za-z0-9]', new_password)):
             return render_template(
                 'change_password.html',
-                error="New password must contain at least 8 characters."
+                error="Password must be 8+ characters with uppercase, lowercase, number, and special character."
             )
 
         if new_password != confirm_password:
@@ -1339,7 +1346,6 @@ def change_password():
             )
 
         import sqlite3
-
         conn = sqlite3.connect('indoor_cricket.db')
         cursor = conn.cursor()
 
@@ -1350,11 +1356,8 @@ def change_password():
 
         user = cursor.fetchone()
 
-        if not user or not check_password_hash(
-            user[0], current_password
-        ):
+        if not user or not check_password_hash(user[0], current_password):
             conn.close()
-
             return render_template(
                 'change_password.html',
                 error="Current password is incorrect."
@@ -1403,5 +1406,5 @@ def logout():
     return redirect('/login')
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run(debug=False)
 
