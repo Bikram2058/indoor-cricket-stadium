@@ -19,8 +19,13 @@
         <a href="/membership">Membership</a>
         <a href="/shop">Shop</a>
         <a href="/contact">Contact</a>
-        <a href="/login">Login</a>
-        <a class="register-btn" href="/register">Register</a>
+           {% if session.get('user') %}
+       <a href="/dashboard">Dashboard</a>
+       <a class="register-btn" href="/logout">Logout</a>
+   {% else %}
+       <a href="/login">Login</a>
+       <a class="register-btn" href="/register">Register</a>
+   {% endif %}
     </nav>
 
 </header>
