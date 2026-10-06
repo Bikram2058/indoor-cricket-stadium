@@ -59,7 +59,7 @@
 
         <input type="password" name="confirm_password" placeholder="Confirm Password" required>
 
-        <button type="submit">Register</button>
+        <button type="submit"{% if rate_limited %}disabled{% endif %}>Register</button>
 
         <p class="form-link">
     Already have an account? <a href="/login">Login here</a>

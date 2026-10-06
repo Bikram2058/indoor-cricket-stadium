@@ -63,9 +63,14 @@ def reset_failed_logins(key):
 
 @app.errorhandler(429)
 def too_many_requests(e):
-    if request.path == '/admin-login':
-        return render_template('admin_login.html', rate_limited=True), 429
-    return render_template('login.html', rate_limited=True), 429
+       wait_msg = "Too many attempts. Please wait a minute and try again."
+       if request.path == '/admin-login':
+           return render_template('admin_login.html', rate_limited=True), 429
+       if request.path == '/register':
+           return render_template('register.html', error=wait_msg), 429
+       if request.path == '/change-password':
+           return render_template('change_password.html', error=wait_msg), 429
+       return render_template('login.html', rate_limited=True), 429
 
 @app.route('/')
 def home():
@@ -1252,6 +1257,7 @@ def edit_profile():
     return render_template('edit_profile.html', user=user)
 
 @app.route('/change-password', methods=['GET', 'POST'])
+@limiter.limit("5 per minute", methods=['POST'])
 def change_password():
 
     if 'user' not in session:
