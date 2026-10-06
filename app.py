@@ -8,13 +8,16 @@ def admin_required(f):
         return f(*args, **kwargs)
     return decorated_function
 
-from datetime import timedelta
+from datetime import datetime, timedelta
 
 from werkzeug.security import generate_password_hash, check_password_hash
 
-from flask import Flask, render_template, request, redirect, session, url_for
+from flask import Flask, render_template, request, redirect, session
 
 from flask_wtf.csrf import CSRFProtect
+
+from flask_limiter import Limiter
+from flask_limiter.util import get_remote_address
 
 import os
 
@@ -30,12 +33,39 @@ app.secret_key = os.getenv("SECRET_KEY")
 
 csrf = CSRFProtect(app)
 
+limiter = Limiter(app=app, key_func=get_remote_address)
+
 stripe.api_key = os.getenv("STRIPE_SECRET_KEY")
 
 # Session security settings
 app.config['SESSION_COOKIE_HTTPONLY'] = True
 app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'
 app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(minutes=30)
+
+# Brute force protection: lock an account after too many failed logins
+MAX_FAILED_ATTEMPTS = 5
+LOCKOUT_TIME = timedelta(minutes=15)
+failed_logins = {}
+
+def is_locked_out(key):
+    record = failed_logins.get(key)
+    return bool(record and record['locked_until'] and datetime.now() < record['locked_until'])
+
+def record_failed_login(key):
+    record = failed_logins.setdefault(key, {'count': 0, 'locked_until': None})
+    record['count'] += 1
+    if record['count'] >= MAX_FAILED_ATTEMPTS:
+        record['locked_until'] = datetime.now() + LOCKOUT_TIME
+        record['count'] = 0
+
+def reset_failed_logins(key):
+    failed_logins.pop(key, None)
+
+@app.errorhandler(429)
+def too_many_requests(e):
+    if request.path == '/admin-login':
+        return render_template('admin_login.html', rate_limited=True), 429
+    return render_template('login.html', rate_limited=True), 429
 
 @app.route('/')
 def home():
@@ -282,11 +312,17 @@ def unavailable_dates():
     }
 
 @app.route('/login', methods=['GET', 'POST'])
+@limiter.limit("5 per minute", methods=['POST'])
 def login():
 
     if request.method == 'POST':
         email = request.form['email']
         password = request.form['password']
+
+        lockout_key = 'user:' + email.strip().lower()
+
+        if is_locked_out(lockout_key):
+            return render_template('login.html', locked=True)
 
         import sqlite3
 
@@ -303,6 +339,7 @@ def login():
         conn.close()
 
         if user and check_password_hash(user[3], password):
+            reset_failed_logins(lockout_key)
             session['user'] = email
 
             # Return to Shop if the user originally clicked Shop
@@ -312,6 +349,7 @@ def login():
             return redirect('/dashboard')
         
         else:
+            record_failed_login(lockout_key)
             return render_template('login.html', error=True)
 
     return render_template('login.html')
@@ -499,118 +537,6 @@ def membership():
         return redirect('/login')
     
     return render_template('membership.html')
-
-@app.route('/create-membership-checkout', methods=['POST'])
-def create_membership_checkout():
-
-    if 'user' not in session:
-        return redirect('/login')
-
-    plan = request.form.get('plan')
-
-    membership_plans = {
-        'Bronze': 2500,
-        'Silver': 4000,
-        'Gold': 5500
-    }
-
-    amount = membership_plans.get(plan)
-
-    if amount is None:
-        return "Invalid membership plan", 400
-
-    checkout_session = stripe.checkout.Session.create(
-        payment_method_types=['card'],
-        line_items=[{
-            'price_data': {
-                'currency': 'aud',
-                'product_data': {
-                    'name': f'{plan} Membership'
-                },
-                'unit_amount': amount,
-            },
-            'quantity': 1,
-        }],
-        mode='payment',
-        success_url=url_for(
-            'membership_payment_success',
-            _external=True
-        ) + '?session_id={CHECKOUT_SESSION_ID}',
-        cancel_url=url_for(
-            'membership',
-            _external=True
-        )
-    )
-
-    session['membership_plan'] = plan
-
-    return redirect(checkout_session.url, code=303)
-
-@app.route('/membership-payment-success')
-def membership_payment_success():
-
-    if 'user' not in session:
-        return redirect('/login')
-
-    stripe_session_id = request.args.get('session_id')
-
-    if not stripe_session_id:
-        return "Invalid payment session", 400
-
-    # Get payment information from Stripe
-    checkout_session = stripe.checkout.Session.retrieve(stripe_session_id)
-
-    # Make sure payment was actually successful
-    if checkout_session.payment_status != 'paid':
-        return "Payment not completed", 400
-
-    plan = session.get('membership_plan')
-
-    membership_prices = {
-        'Bronze': 25.00,
-        'Silver': 40.00,
-        'Gold': 55.00
-    }
-
-    price = membership_prices.get(plan)
-
-    if price is None:
-        return "Invalid membership plan", 400
-
-    from datetime import datetime, timedelta
-    import sqlite3
-
-    start_date = datetime.now()
-    end_date = start_date + timedelta(days=30)
-
-    conn = sqlite3.connect('indoor_cricket.db')
-    cursor = conn.cursor()
-
-    cursor.execute("""
-        INSERT INTO memberships
-        (user_email, plan, price, start_date, end_date, status, stripe_session_id)
-        VALUES (?, ?, ?, ?, ?, ?, ?)
-    """, (
-        session['user'],
-        plan,
-        price,
-        start_date.strftime('%Y-%m-%d'),
-        end_date.strftime('%Y-%m-%d'),
-        'Active',
-        stripe_session_id
-    ))
-
-    conn.commit()
-    conn.close()
-
-    session.pop('membership_plan', None)
-
-    return render_template(
-        'membership_payment_success.html',
-        plan=plan,
-        price=price,
-        end_date=end_date.strftime('%d %B %Y')
-    )
 
 @app.route('/contact')
 def contact():
@@ -1063,17 +989,23 @@ def tournament():
     return render_template('tournament.html')
 
 @app.route('/admin-login', methods=['GET', 'POST'])
+@limiter.limit("5 per minute", methods=['POST'])
 def admin_login():
 
     if request.method == 'POST':
         email = request.form['email']
         password = request.form['password']
 
+        if is_locked_out('admin'):
+            return render_template('admin_login.html', locked=True)
+
         # Admin login details
         if email == os.getenv("ADMIN_EMAIL") and check_password_hash(os.getenv("ADMIN_PASSWORD_HASH"), password):
+            reset_failed_logins('admin')
             session['admin'] = True
             return redirect('/admin')
 
+        record_failed_login('admin')
         return render_template('admin_login.html', error=True)
 
     return render_template('admin_login.html')

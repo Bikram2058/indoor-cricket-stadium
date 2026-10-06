@@ -15,6 +15,14 @@
     <p class="error-message">Invalid Admin Email or Password!</p>
     {% endif %}
 
+    {% if locked %}
+    <p class="error-message">Too many failed attempts. Admin login is locked for 15 minutes.</p>
+    {% endif %}
+
+    {% if rate_limited %}
+    <p class="error-message">Too many login attempts. Please wait a minute and try again.</p>
+    {% endif %}
+
     <form method="POST" action="/admin-login">
            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
 

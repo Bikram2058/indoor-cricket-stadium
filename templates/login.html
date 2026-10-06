@@ -43,6 +43,18 @@
         </p>
         {% endif %}
 
+        {% if locked %}
+        <p class="error-message">
+        Too many failed attempts. This account is locked for 15 minutes.
+        </p>
+        {% endif %}
+
+        {% if rate_limited %}
+        <p class="error-message">
+        Too many login attempts. Please wait a minute and try again.
+        </p>
+        {% endif %}
+
         <form method="POST" action="/login">
 
             <input type="hidden"
