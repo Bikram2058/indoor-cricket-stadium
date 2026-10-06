@@ -341,6 +341,7 @@ def login():
         if user and check_password_hash(user[3], password):
             reset_failed_logins(lockout_key)
             session['user'] = email
+            session.permanent = True
 
             # Return to Shop if the user originally clicked Shop
             if request.form.get('next') == 'shop':
@@ -355,6 +356,7 @@ def login():
     return render_template('login.html')
 
 @app.route('/register', methods=['GET', 'POST'])
+@limiter.limit("5 per minute", methods=['POST'])
 def register():
 
        if request.method == 'POST':
@@ -1003,6 +1005,7 @@ def admin_login():
         if email == os.getenv("ADMIN_EMAIL") and check_password_hash(os.getenv("ADMIN_PASSWORD_HASH"), password):
             reset_failed_logins('admin')
             session['admin'] = True
+            session
             return redirect('/admin')
 
         record_failed_login('admin')
