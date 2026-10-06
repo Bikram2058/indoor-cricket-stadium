@@ -36,6 +36,16 @@ csrf = CSRFProtect(app)
 limiter = Limiter(app=app, key_func=get_remote_address)
 
 stripe.api_key = os.getenv("STRIPE_SECRET_KEY")
+   # Audit logging: record security events in security.log
+import logging
+audit_logger = logging.getLogger('audit')
+audit_logger.setLevel(logging.INFO)
+audit_handler = logging.FileHandler('security.log')
+audit_handler.setFormatter(logging.Formatter('%(asctime)s | %(message)s'))
+audit_logger.addHandler(audit_handler)
+
+def audit(event, detail=''):
+       audit_logger.info(f"{event} | IP={request.remote_addr} | {detail}")
 
 # Session security settings
 app.config['SESSION_COOKIE_HTTPONLY'] = True
@@ -63,14 +73,40 @@ def reset_failed_logins(key):
 
 @app.errorhandler(429)
 def too_many_requests(e):
-       wait_msg = "Too many attempts. Please wait a minute and try again."
-       if request.path == '/admin-login':
-           return render_template('admin_login.html', rate_limited=True), 429
-       if request.path == '/register':
-           return render_template('register.html', error=wait_msg), 429
-       if request.path == '/change-password':
-           return render_template('change_password.html', error=wait_msg), 429
-       return render_template('login.html', rate_limited=True), 429
+    audit("RATE_LIMITED", f"path={request.path}")
+    wait_msg = "Too many attempts. Please wait a minute and try again."
+    if request.path == '/admin-login':
+        return render_template('admin_login.html', rate_limited=True), 429
+    if request.path == '/register':
+        return render_template('register.html', error=wait_msg, rate_limited=True), 429
+    if request.path == '/change-password':
+        return render_template('change_password.html', error=wait_msg), 429
+    return render_template('login.html', rate_limited=True), 429
+
+# Security headers: tell the browser to block common attacks
+@app.after_request
+def add_security_headers(response):
+       # Stop other websites showing our site in a hidden frame (clickjacking)
+       response.headers['X-Frame-Options'] = 'DENY'
+       # Stop the browser guessing file types (MIME sniffing)
+       response.headers['X-Content-Type-Options'] = 'nosniff'
+       # Don't leak full page URLs to other websites
+       response.headers['Referrer-Policy'] = 'strict-origin-when-cross-origin'
+       # Block camera, microphone and location access
+       response.headers['Permissions-Policy'] = 'camera=(), microphone=(), geolocation=()'
+       # Only load scripts, styles and images from trusted places
+       response.headers['Content-Security-Policy'] = (
+           "default-src 'self'; "
+           "script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://js.stripe.com; "
+           "style-src 'self' 'unsafe-inline' https:; "
+           "font-src 'self' https: data:; "
+           "img-src 'self' https: data:; "
+           "frame-ancestors 'none'; "
+           "form-action 'self' https://checkout.stripe.com"
+       )
+       return response
+
+
 
 @app.route('/')
 def home():
@@ -327,6 +363,7 @@ def login():
         lockout_key = 'user:' + email.strip().lower()
 
         if is_locked_out(lockout_key):
+            audit("LOGIN_BLOCKED_LOCKED", f"user={email}")
             return render_template('login.html', locked=True)
 
         import sqlite3
@@ -347,6 +384,7 @@ def login():
             reset_failed_logins(lockout_key)
             session['user'] = email
             session.permanent = True
+            audit("LOGIN_SUCCESS", f"user={email}")
 
             # Return to Shop if the user originally clicked Shop
             if request.form.get('next') == 'shop':
@@ -355,6 +393,7 @@ def login():
             return redirect('/dashboard')
         
         else:
+            audit("LOGIN_FAILED", f"user={email}")
             record_failed_login(lockout_key)
             return render_template('login.html', error=True)
 
@@ -1020,7 +1059,7 @@ def admin_login():
 
 @app.route('/admin-logout')
 def admin_logout():
-    session.pop('admin', None)
+    session.clear()
     return redirect('/admin-login')
 
 @app.route('/admin')
@@ -1341,8 +1380,7 @@ def delete_tournament(id):
 def logout():
 
     # Remove the logged-in user's session
-    session.pop('user', None)
-
+    session.clear()
     # Redirect to the login page
     return redirect('/login')
 
