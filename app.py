@@ -617,6 +617,123 @@ def membership():
         return redirect('/login')
     
     return render_template('membership.html')
+# Membership plans - prices set on the server (cents), never trusted from the browser
+MEMBERSHIP_PLANS = {
+    'Bronze': 2500,
+    'Silver': 4000,
+    'Gold': 5500
+}
+
+@app.route('/create-membership-checkout', methods=['POST'])
+def create_membership_checkout():
+
+    if 'user' not in session:
+        return redirect('/login')
+
+    plan = request.form.get('plan')
+
+    if plan not in MEMBERSHIP_PLANS:
+        return "Invalid membership plan", 400
+
+    amount = MEMBERSHIP_PLANS[plan]
+
+    checkout_session = stripe.checkout.Session.create(
+        payment_method_types=['card'],
+        line_items=[{
+            'price_data': {
+                'currency': 'aud',
+                'product_data': {'name': f"{plan} Membership - 1 Month"},
+                'unit_amount': amount
+            },
+            'quantity': 1
+        }],
+        mode='payment',
+        success_url='http://127.0.0.1:5000/membership-payment-success?session_id={CHECKOUT_SESSION_ID}',
+        cancel_url='http://127.0.0.1:5000/membership',
+        client_reference_id=session['user']
+    )
+
+    session['pending_membership'] = {
+        'plan': plan,
+        'stripe_session_id': checkout_session.id
+    }
+
+    return redirect(checkout_session.url, code=303)
+
+
+@app.route('/membership-payment-success')
+def membership_payment_success():
+
+    if 'user' not in session:
+        return redirect('/login')
+
+    stripe_session_id = request.args.get('session_id')
+    pending = session.get('pending_membership')
+
+    if not stripe_session_id or not pending:
+        return redirect('/membership')
+
+    if pending['stripe_session_id'] != stripe_session_id:
+        return "Invalid payment session.", 403
+
+    try:
+        payment = stripe.checkout.Session.retrieve(stripe_session_id)
+    except stripe.StripeError:
+        return "Unable to verify payment.", 400
+
+    plan = pending['plan']
+    expected_amount = MEMBERSHIP_PLANS.get(plan)
+
+    # Verify the payment with Stripe before saving anything
+    if (
+        payment.payment_status != 'paid'
+        or payment.client_reference_id != session['user']
+        or payment.amount_total != expected_amount
+        or payment.currency != 'aud'
+    ):
+        return "Payment verification failed.", 403
+
+    import sqlite3
+    conn = sqlite3.connect('indoor_cricket.db', timeout=10)
+    cursor = conn.cursor()
+
+    # Stop the same payment creating two memberships
+    cursor.execute(
+        "SELECT id FROM memberships WHERE stripe_session_id = ?",
+        (stripe_session_id,)
+    )
+
+    start_date = datetime.now().date()
+    end_date = start_date + timedelta(days=30)
+
+    if not cursor.fetchone():
+        cursor.execute("""
+            INSERT INTO memberships
+            (user_email, plan, price, start_date, end_date, status, stripe_session_id)
+            VALUES (?, ?, ?, ?, ?, ?, ?)
+        """, (
+            session['user'],
+            plan,
+            expected_amount / 100,
+            start_date.isoformat(),
+            end_date.isoformat(),
+            'Active',
+            stripe_session_id
+        ))
+        conn.commit()
+        audit("MEMBERSHIP_PURCHASED", f"user={session['user']} plan={plan}")
+
+    conn.close()
+    session.pop('pending_membership', None)
+
+    return render_template(
+        'membership_payment_success.html',
+        plan=plan,
+        price=expected_amount / 100,
+        start_date=start_date.isoformat(),
+        end_date=end_date.isoformat()
+    )
+
 
 @app.route('/contact')
 def contact():
