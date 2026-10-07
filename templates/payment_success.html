@@ -19,6 +19,18 @@
 
         <p>Your cricket lane booking is confirmed.</p>
 
+                {% if booking_code %}
+        <div style="margin:20px auto; padding:16px; border:2px dashed #39ff14; border-radius:10px; max-width:420px; text-align:center;">
+            <p style="margin:0;">Your booking code (show this at the gate):</p>
+            <p style="font-size:28px; font-weight:bold; letter-spacing:2px; margin:8px 0;">{{ booking_code }}</p>
+            {% if email_sent %}
+            <p style="margin:0;">A confirmation email has been sent to your inbox.</p>
+            {% else %}
+            <p style="margin:0;">Please save this code. We could not send the confirmation email.</p>
+            {% endif %}
+        </div>
+        {% endif %}
+
         <a href="/" class="home-button">
             Return to Home
         </a>

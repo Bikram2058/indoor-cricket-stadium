@@ -47,6 +47,49 @@ audit_logger.addHandler(audit_handler)
 def audit(event, detail=''):
        audit_logger.info(f"{event} | IP={request.remote_addr} | {detail}")
 
+# Booking ticket: random code + confirmation email
+import smtplib
+import secrets
+from email.message import EmailMessage
+
+def generate_booking_code():
+    # e.g. ICC-7F3A-9B21-C4D0 (random, cannot be guessed)
+    parts = [secrets.token_hex(2).upper() for _ in range(3)]
+    return "ICC-" + "-".join(parts)
+
+def send_booking_email(to_email, booking, code):
+    msg = EmailMessage()
+    msg['Subject'] = f"Booking Confirmed - {code} - Indoor Cricket Centre"
+    msg['From'] = os.getenv("MAIL_USERNAME")
+    msg['To'] = to_email
+    msg.set_content(f"""Hi {booking['full_name']},
+
+Your booking is confirmed! Show this code at the stadium gate:
+
+    BOOKING CODE: {code}
+
+    Lane:      {booking['lane']}
+    Date:      {booking['booking_date']}
+    Time:      {booking['booking_time']}
+    Duration:  {booking['duration']}
+    Players:   {booking['players']}
+    Paid:      ${booking['amount'] / 100:.2f} AUD
+
+This code can only be used once at the gate.
+If you did not make this booking, please contact us immediately.
+
+Indoor Cricket Centre
+""")
+    try:
+            with smtplib.SMTP('smtp.gmail.com', 587, timeout=20) as smtp:
+                smtp.starttls()
+                smtp.login(os.getenv("MAIL_USERNAME"), os.getenv("MAIL_PASSWORD"))
+                smtp.send_message(msg)
+            return True
+    except Exception as e:
+            audit("EMAIL_FAILED", f"to={to_email} error={type(e).__name__}")
+            return False
+
 # Session security settings
 app.config['SESSION_COOKIE_HTTPONLY'] = True
 app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'
@@ -528,12 +571,13 @@ def payment_success():
     )
 
     cursor = conn.cursor()
+    booking_code = generate_booking_code()
 
     cursor.execute("""
         INSERT INTO bookings
         (full_name, phone, email, booking_date,
-         booking_time, lane, duration, member, players)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+        booking_time, lane, duration, member, players, booking_code)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     """, (
         booking['full_name'],
         booking['phone'],
@@ -543,17 +587,22 @@ def payment_success():
         booking['lane'],
         booking['duration'],
         booking['member'],
-        booking['players']
+        booking['players'],
+        booking_code
+        
     ))
 
     conn.commit()
     conn.close()
 
+    audit("BOOKING_CONFIRMED", f"code={booking_code} user={booking['email']}")
+    email_sent = send_booking_email(booking['email'], booking, booking_code)
+
     session.pop('pending_booking', None)
 
     session.pop('checkout_session_id', None)
 
-    return render_template('payment_success.html')
+    return render_template('payment_success.html', booking_code=booking_code, email_sent=email_sent)
 
 @app.route('/payment-cancel')
 def payment_cancel():
