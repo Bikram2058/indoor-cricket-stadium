@@ -114,12 +114,14 @@ def home():
 
 @app.route('/booking', methods=['GET', 'POST'])
 def booking():
+    if 'user' not in session:
+        return redirect('/login')
 
     if request.method == 'POST':
 
         full_name = request.form['full_name']
         phone = request.form['phone']
-        email = request.form['email']
+        email = session['user']
         booking_date = request.form['booking_date']
         booking_time = request.form['booking_time']
         lane = request.form['lane']
@@ -134,7 +136,8 @@ def booking():
             return render_template(
                 'booking.html',
                 error="You cannot book a date in the past."
-                )
+            )
+
         price_map = {
             '30 Minutes - $25': 2500,
             '1 Hour - $40': 4000,
@@ -145,7 +148,7 @@ def booking():
 
         if amount is None:
             return "Invalid booking duration", 400
-        
+
         member = request.form['member']
 
         players = int(request.form['players'])
@@ -170,18 +173,15 @@ def booking():
         if new_duration is None:
             return "Invalid booking duration", 400
 
-        # Calculate requested booking start and end time
         new_start = datetime.strptime(
             f"{booking_date} {booking_time}",
             "%Y-%m-%d %H:%M"
         )
-
         new_end = new_start + timedelta(minutes=new_duration)
 
         conn = sqlite3.connect('indoor_cricket.db')
         cursor = conn.cursor()
 
-        # Get every booking for this lane on this date
         cursor.execute("""
             SELECT booking_time, duration
             FROM bookings
@@ -192,7 +192,6 @@ def booking():
         existing_bookings = cursor.fetchall()
         conn.close()
 
-        # Check if selected duration overlaps an existing booking
         for existing_time, existing_duration in existing_bookings:
 
             existing_minutes = duration_minutes.get(existing_duration)
@@ -204,38 +203,26 @@ def booking():
                 f"{booking_date} {existing_time}",
                 "%Y-%m-%d %H:%M"
             )
+            existing_end = existing_start + timedelta(minutes=existing_minutes)
 
-            existing_end = existing_start + timedelta(
-                minutes=existing_minutes
-            )
-
-            # Check for overlap
             if new_start < existing_end and new_end > existing_start:
 
-                # User selected a time inside an existing booking
                 if new_start >= existing_start:
                     next_available = existing_end.strftime("%I:%M %p")
-
                     error_message = (
                         f"This lane is currently booked. "
                         f"Next available at {next_available}."
                     )
-
-                # Starting time is free, but selected duration hits next booking
                 else:
                     next_booking = existing_start.strftime("%I:%M %p")
-
                     error_message = (
                         f"Selected duration overlaps another booking "
                         f"starting at {next_booking}. "
                         f"Please choose a shorter duration."
                     )
 
-                return render_template(
-                    'booking.html',
-                    error=error_message
-                )
-    
+                return render_template('booking.html', error=error_message)
+
         session['pending_booking'] = {
             'full_name': full_name,
             'phone': phone,
@@ -251,9 +238,7 @@ def booking():
 
         return redirect('/create-checkout-session')
 
-
     return render_template('booking.html')
-
 @app.route('/check-availability')
 def check_availability():
     booking_date = request.args.get('date')
@@ -1083,7 +1068,7 @@ def admin():
 
     return render_template('admin.html', bookings=bookings, tournaments=tournaments)
     
-@app.route('/delete-booking/<int:id>')
+@app.route('/delete-booking/<int:id>', methods=['POST'])
 @admin_required
 def delete_booking(id):
 
@@ -1363,7 +1348,7 @@ def change_password():
 
     return render_template('change_password.html')
 
-@app.route('/delete-tournament/<int:id>')
+@app.route('/delete-tournament/<int:id>', methods=['POST'])
 @admin_required
 def delete_tournament(id):
     

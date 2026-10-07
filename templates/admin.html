@@ -63,7 +63,10 @@
                 <td>{{ booking[8] }}</td>
                 <td>{{ booking[9] }}</td>
                 <td>
-                    <a class="delete-btn" href="/delete-booking/{{ booking[0] }}">Delete</a>
+                    <form method="POST" action="/delete-booking/{{ booking[0] }}" style="display:inline;">
+       <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+       <button type="submit" class="delete-btn" onclick="return confirm('Delete this booking?')">Delete</button>
+   </form>
                 </td>
             </tr>
 
@@ -99,10 +102,10 @@
 
         <td>
         
-        <a href="{{ url_for('delete_tournament', id=tournament[0]) }}"
-            class="delete-btn">
-             Delete
-        </a>
+          <form method="POST" action="{{ url_for('delete_tournament', id=tournament[0]) }}" style="display:inline;">
+       <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+       <button type="submit" class="delete-btn" onclick="return confirm('Delete this tournament?')">Delete</button>
+   </form>
 
         </td>
         
