@@ -1043,15 +1043,17 @@ def admin_login():
         password = request.form['password']
 
         if is_locked_out('admin'):
+            audit("ADMIN_LOGIN_BLOCKED_LOCKED", f"email={email}")
             return render_template('admin_login.html', locked=True)
 
         # Admin login details
         if email == os.getenv("ADMIN_EMAIL") and check_password_hash(os.getenv("ADMIN_PASSWORD_HASH"), password):
             reset_failed_logins('admin')
             session['admin'] = True
-            session
+            session.permanent = True
+            audit("ADMIN_LOGIN_SUCCESS", f"email={email}")
             return redirect('/admin')
-
+        audit("ADMIN_LOGIN_FAILED", f"email={email}")
         record_failed_login('admin')
         return render_template('admin_login.html', error=True)
 
@@ -1085,6 +1087,7 @@ def admin():
 @admin_required
 def delete_booking(id):
 
+    audit("ADMIN_DELETE_BOOKING", f"booking_id={id}")
     import sqlite3
 
     conn = sqlite3.connect('indoor_cricket.db')
@@ -1364,6 +1367,7 @@ def change_password():
 @admin_required
 def delete_tournament(id):
     
+    audit("ADMIN_DELETE_TOURNAMENT", f"tournament_id={id}")
     import sqlite3
 
     conn = sqlite3.connect('indoor_cricket.db')
