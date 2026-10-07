@@ -126,6 +126,7 @@
                         <th>Lane</th>
                         <th>Duration</th>
                         <th>Players</th>
+                        <th>Booking Code</th>
                         <th>Status</th>
                     </tr>
                 </thead>
@@ -146,7 +147,14 @@
                         <td>{{ booking['duration'] }}</td>
 
                         <td>{{ booking['players'] }}</td>
-
+   <td>
+       {% if booking['booking_code'] %}
+           <strong>{{ booking['booking_code'] }}</strong>
+           {% if booking['checked_in_at'] %}<br><small>✔ Used {{ booking['checked_in_at'] }}</small>{% endif %}
+       {% else %}
+           -
+       {% endif %}
+   </td>
                         <td>
     {% if booking['status'] == 'Upcoming' %}
 

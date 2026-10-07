@@ -1179,7 +1179,7 @@ def my_bookings():
     # Retrieve bookings associated with the user's email
     cursor.execute("""
         SELECT id, booking_date, booking_time,
-               lane, duration, players
+              lane, duration, players, booking_code, checked_in_at
         FROM bookings
         WHERE email = ?
         ORDER BY booking_date DESC, booking_time DESC
@@ -1413,6 +1413,57 @@ def delete_tournament(id):
     conn.close()
 
     return redirect('/admin')
+
+@app.route('/gate-check', methods=['GET', 'POST'])
+@admin_required
+def gate_check():
+    result = None
+
+    if request.method == 'POST':
+        code = request.form.get('booking_code', '').strip().upper()
+
+        import sqlite3
+        conn = sqlite3.connect('indoor_cricket.db', timeout=10)
+        conn.row_factory = sqlite3.Row
+        cursor = conn.cursor()
+
+        cursor.execute("SELECT * FROM bookings WHERE booking_code = ?", (code,))
+        booking = cursor.fetchone()
+
+        today = datetime.now().strftime('%Y-%m-%d')
+
+        if not booking:
+            result = {'status': 'invalid',
+                      'message': 'Booking not found. Do NOT allow entry.'}
+            audit("GATE_INVALID_CODE", f"code={code}")
+
+        elif booking['checked_in_at']:
+            result = {'status': 'used',
+                      'message': f"Already checked in at {booking['checked_in_at']}. Do NOT allow entry.",
+                      'booking': dict(booking)}
+            audit("GATE_CODE_REUSED", f"code={code}")
+
+        elif booking['booking_date'] != today:
+            result = {'status': 'wrong_date',
+                      'message': f"This booking is for {booking['booking_date']}, not today.",
+                      'booking': dict(booking)}
+            audit("GATE_WRONG_DATE", f"code={code}")
+
+        else:
+            now = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+            cursor.execute(
+                "UPDATE bookings SET checked_in_at = ? WHERE id = ? AND checked_in_at IS NULL",
+                (now, booking['id'])
+            )
+            conn.commit()
+            result = {'status': 'valid',
+                      'message': 'Valid ticket. Allow entry.',
+                      'booking': dict(booking)}
+            audit("GATE_CHECK_IN", f"code={code}")
+
+        conn.close()
+
+    return render_template('gate_check.html', result=result)
 
 @app.route('/logout')
 def logout():

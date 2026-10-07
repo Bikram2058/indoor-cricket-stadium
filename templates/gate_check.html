@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gate Check</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body style="background:#0b1a0b; color:#fff; font-family:Arial, sans-serif;">
+
+<div style="max-width:480px; margin:60px auto; padding:24px; border:2px solid #39ff14; border-radius:12px; text-align:center;">
+
+    <h1>🚪 Gate Check</h1>
+    <p>Enter the customer's booking code</p>
+
+    <form method="POST">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <input type="text" name="booking_code" placeholder="ICC-XXXX-XXXX-XXXX"
+               required maxlength="20"
+               style="width:90%; padding:12px; font-size:18px; text-transform:uppercase; border-radius:8px; border:none;">
+        <br><br>
+        <button type="submit"
+                style="padding:12px 28px; font-size:16px; font-weight:bold; background:#39ff14; border:none; border-radius:8px; cursor:pointer;">
+            Check Ticket
+        </button>
+    </form>
+
+    {% if result %}
+           {% set bg = '#1e7e34' if result.status == 'valid' else ('#b36b00' if result.status == 'wrong_date' else '#a71d2a') %}
+       <div style="margin-top:24px; padding:16px; border-radius:10px; text-align:left;"
+            data-bg="{{ bg }}" class="gate-result">
+
+        <h2 style="margin-top:0;">
+            {% if result.status == 'valid' %}✅ VALID
+            {% elif result.status == 'wrong_date' %}⚠️ WRONG DATE
+            {% elif result.status == 'used' %}⛔ ALREADY USED
+            {% else %}❌ INVALID{% endif %}
+        </h2>
+        <p><strong>{{ result.message }}</strong></p>
+
+        {% if result.booking %}
+        <p>
+            Name: {{ result.booking.full_name }}<br>
+            Lane: {{ result.booking.lane }}<br>
+            Date: {{ result.booking.booking_date }}<br>
+            Time: {{ result.booking.booking_time }}<br>
+            Duration: {{ result.booking.duration }}<br>
+            Players: {{ result.booking.players }}
+        </p>
+        {% endif %}
+    </div>
+    {% endif %}
+
+    <p style="margin-top:24px;"><a href="/admin" style="color:#39ff14;">← Back to Admin</a></p>
+</div>
+
+</body>
+</html>
