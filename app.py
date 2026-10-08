@@ -90,6 +90,32 @@ Indoor Cricket Centre
             audit("EMAIL_FAILED", f"to={to_email} error={type(e).__name__}")
             return False
 
+def send_login_email(to_email):
+    from email.mime.text import MIMEText
+    from datetime import datetime
+
+    msg = MIMEText(
+        f"Hello,\n\n"
+        f"A login to your Indoor Cricket Centre account was just detected.\n\n"
+        f"Time: {datetime.now().strftime('%d %b %Y, %I:%M %p')}\n\n"
+        f"If this was you, no action is needed.\n"
+        f"If you did not log in, please change your password immediately.\n\n"
+        f"Indoor Cricket Centre"
+    )
+    msg['Subject'] = 'New login to your account'
+    msg['From'] = os.getenv("MAIL_USERNAME")
+    msg['To'] = to_email
+
+    try:
+        with smtplib.SMTP('smtp.gmail.com', 587, timeout=20) as smtp:
+            smtp.starttls()
+            smtp.login(os.getenv("MAIL_USERNAME"), os.getenv("MAIL_PASSWORD"))
+            smtp.send_message(msg)
+        return True
+    except Exception as e:
+        audit("LOGIN_EMAIL_FAILED", f"to={to_email} error={type(e).__name__}")
+        return False
+
 # Session security settings
 app.config['SESSION_COOKIE_HTTPONLY'] = True
 app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'
@@ -413,6 +439,7 @@ def login():
             session['user'] = email
             session.permanent = True
             audit("LOGIN_SUCCESS", f"user={email}")
+            send_login_email(email)
 
             # Return to Shop if the user originally clicked Shop
             if request.form.get('next') == 'shop':
@@ -1269,6 +1296,12 @@ def user_dashboard():
     )
 
     user = cursor.fetchone()
+    cursor.execute(
+            "SELECT plan, end_date, status FROM memberships "
+            "WHERE user_email = ? ORDER BY id DESC LIMIT 1",
+            (session['user'],)
+        )
+    membership = cursor.fetchone()
     conn.close()
 
     if not user:
@@ -1277,8 +1310,30 @@ def user_dashboard():
 
     return render_template(
         'user_dashboard.html',
-        user=user
+        user=user,
+        membership=membership
+
     )
+@app.route('/cancel-booking/<int:id>', methods=['POST'])
+def cancel_booking(id):
+    if 'user' not in session:
+        return redirect('/login')
+
+    import sqlite3
+    conn = sqlite3.connect('indoor_cricket.db')
+    cursor = conn.cursor()
+
+    # Only cancel a booking that belongs to the logged-in user
+    cursor.execute(
+        "DELETE FROM bookings WHERE id = ? AND email = ?",
+        (id, session['user'])
+    )
+    conn.commit()
+    conn.close()
+
+    audit("BOOKING_CANCELLED", f"user={session['user']} booking_id={id}")
+    return redirect('/my-bookings')
+
 
 @app.route('/my-bookings')
 def my_bookings():

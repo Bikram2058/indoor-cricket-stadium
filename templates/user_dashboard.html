@@ -129,8 +129,14 @@
 
             <div class="dashboard-card">
                 <h3>My Membership</h3>
-                <p>View and manage your membership.</p>
-                <a href="/membership">Membership</a>
+                {% if membership %}
+                <p>Plan: <strong>{{ membership['plan'] }}</strong> ({{ membership['status'] }})</p>
+                <p>Valid until: {{ membership['end_date'] }}</p>
+                <a href="/membership">Manage Membership</a>
+            {% else %}
+                <p>You are not a member yet.</p>
+                <a href="/membership">Become a Member</a>
+            {% endif %}
             </div>
 
             <!-- PASSWORD -->

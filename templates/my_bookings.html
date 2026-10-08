@@ -128,6 +128,7 @@
                         <th>Players</th>
                         <th>Booking Code</th>
                         <th>Status</th>
+                        <th>Action</th>
                     </tr>
                 </thead>
 
@@ -176,6 +177,14 @@
 
     {% endif %}
 </td>
+                    <td>
+                        {% if booking['status'] == 'Upcoming' %}
+                        <form method="POST" action="/cancel-booking/{{ booking['id'] }}" onsubmit="return confirm('Cancel this booking?');">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                            <button type="submit" class="delete-btn">Cancel</button>
+                        </form>
+                        {% endif %}
+                    </td>
 
                     </tr>
 
