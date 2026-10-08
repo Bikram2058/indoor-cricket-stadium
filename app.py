@@ -116,6 +116,31 @@ def send_login_email(to_email):
         audit("LOGIN_EMAIL_FAILED", f"to={to_email} error={type(e).__name__}")
         return False
 
+def send_reset_email(to_email, reset_link):
+    from email.mime.text import MIMEText
+    msg = MIMEText(
+        "Hello,\n\n"
+        "We received a request to reset your Indoor Cricket Centre password.\n\n"
+        "Click the link below to set a new password (valid for 1 hour):\n"
+        f"{reset_link}\n\n"
+        "If you did not request this, you can safely ignore this email.\n\n"
+        "Indoor Cricket Centre"
+    )
+    msg['Subject'] = 'Reset your password'
+    msg['From'] = os.getenv("MAIL_USERNAME")
+    msg['To'] = to_email
+
+    try:
+        with smtplib.SMTP('smtp.gmail.com', 587, timeout=20) as smtp:
+            smtp.starttls()
+            smtp.login(os.getenv("MAIL_USERNAME"), os.getenv("MAIL_PASSWORD"))
+            smtp.send_message(msg)
+        return True
+    except Exception as e:
+        audit("RESET_EMAIL_FAILED", f"to={to_email} error={type(e).__name__}")
+        return False
+
+
 # Session security settings
 app.config['SESSION_COOKIE_HTTPONLY'] = True
 app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'
@@ -405,6 +430,95 @@ def unavailable_dates():
     return {
         'unavailable_dates': dates
     }
+@app.route('/forgot-password', methods=['GET', 'POST'])
+def forgot_password():
+    if request.method == 'POST':
+        email = request.form['email']
+
+        import sqlite3
+        import secrets
+        from datetime import datetime, timedelta
+
+        conn = sqlite3.connect('indoor_cricket.db')
+        cursor = conn.cursor()
+        cursor.execute("SELECT email FROM users WHERE email = ?", (email,))
+        user = cursor.fetchone()
+
+        if user:
+            token = secrets.token_urlsafe(32)
+            expires_at = (datetime.now() + timedelta(hours=1)).isoformat()
+            cursor.execute(
+                "INSERT INTO password_resets (email, token, expires_at) VALUES (?, ?, ?)",
+                (email, token, expires_at)
+            )
+            conn.commit()
+            reset_link = request.url_root.rstrip('/') + '/reset-password/' + token
+            send_reset_email(email, reset_link)
+            audit("PASSWORD_RESET_REQUESTED", f"user={email}")
+
+        conn.close()
+        return render_template(
+            'forgot_password.html',
+            message="If that email is registered, a reset link has been sent."
+        )
+
+    return render_template('forgot_password.html')
+
+
+@app.route('/reset-password/<token>', methods=['GET', 'POST'])
+def reset_password(token):
+    import sqlite3
+    from datetime import datetime
+
+    conn = sqlite3.connect('indoor_cricket.db')
+    cursor = conn.cursor()
+    cursor.execute(
+        "SELECT email, expires_at FROM password_resets WHERE token = ?",
+        (token,)
+    )
+    row = cursor.fetchone()
+
+    if not row:
+        conn.close()
+        return render_template('reset_password.html', error="This reset link is invalid.")
+
+    email, expires_at = row
+
+    if datetime.now() > datetime.fromisoformat(expires_at):
+        conn.close()
+        return render_template('reset_password.html', error="This reset link has expired.")
+
+    if request.method == 'POST':
+        new_password = request.form['new_password']
+        confirm_password = request.form['confirm_password']
+
+        import re
+        if (len(new_password) < 8
+                or not re.search(r'[A-Z]', new_password)
+                or not re.search(r'[a-z]', new_password)
+                or not re.search(r'[0-9]', new_password)
+                or not re.search(r'[^A-Za-z0-9]', new_password)):
+            conn.close()
+            return render_template(
+                'reset_password.html', token=token,
+                error="Password must be 8+ characters with uppercase, lowercase, number, and special character."
+            )
+
+        if new_password != confirm_password:
+            conn.close()
+            return render_template('reset_password.html', token=token, error="Passwords do not match.")
+
+        hashed = generate_password_hash(new_password)
+        cursor.execute("UPDATE users SET password = ? WHERE email = ?", (hashed, email))
+        cursor.execute("DELETE FROM password_resets WHERE email = ?", (email,))
+        conn.commit()
+        conn.close()
+        audit("PASSWORD_RESET_SUCCESS", f"user={email}")
+        return render_template('reset_password.html', success="Your password has been reset. You can now log in.")
+
+    conn.close()
+    return render_template('reset_password.html', token=token)
+
 
 @app.route('/login', methods=['GET', 'POST'])
 @limiter.limit("5 per minute", methods=['POST'])
