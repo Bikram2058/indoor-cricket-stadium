@@ -2,49 +2,63 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Forgot Password</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Payment Successful</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
     <style>
-        body { margin:0; font-family:Arial,sans-serif; min-height:100vh;
-            display:flex; justify-content:center; align-items:center;
-            background:linear-gradient(135deg,#071707,#0d3b17,#071707); color:#fff; }
-        .reset-card { background:rgba(7,23,7,0.9); border:2px solid #64dd24;
-            border-radius:16px; padding:40px; width:340px; text-align:center;
-            box-shadow:0 0 30px rgba(100,221,36,0.45); }
-        .emoji { font-size:60px; margin-bottom:10px; }
-        h2 { color:#64dd24; margin:0 0 10px; }
-        p.desc { color:#cfcfcf; font-size:14px; margin-bottom:18px; }
-        input { width:100%; padding:12px; margin:8px 0; border-radius:8px; border:none; box-sizing:border-box; }
-        button { width:100%; padding:12px; margin-top:12px; background:#64dd24; color:#071707;
-            font-weight:bold; font-size:15px; border:none; border-radius:8px; cursor:pointer; }
-        button:hover { background:#7ff03a; }
-        a { color:#64dd24; text-decoration:none; }
-        .success-message { color:#64dd24; }
+        .payment-page {
+            background: #0d2818;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+        }
+        .payment-card {
+            background: #14331f;
+            padding: 45px 40px;
+            border-radius: 16px;
+            text-align: center;
+            max-width: 420px;
+            width: 90%;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.4);
+        }
+        .success-icon {
+            width: 80px;
+            height: 80px;
+            line-height: 80px;
+            margin: 0 auto 20px;
+            border-radius: 50%;
+            background: #64dd24;
+            color: #0d2818;
+            font-size: 44px;
+            font-weight: bold;
+        }
+        .payment-card h1 { color: #fff; margin: 0 0 12px; }
+        .payment-card p { color: #cfe8d5; margin: 6px 0; }
+        .payment-card .main-btn {
+            display: inline-block;
+            margin: 18px 8px 0;
+            padding: 12px 22px;
+            background: #64dd24;
+            color: #0d2818;
+            text-decoration: none;
+            border-radius: 8px;
+            font-weight: 600;
+        }
     </style>
 </head>
-<body>
-
-<div class="reset-card">
-    {% if message %}
-        <div class="emoji">📧✅</div>
-    {% else %}
-        <div class="emoji">😟</div>
-    {% endif %}
-
-    <h2>Forgot Password</h2>
-    <p class="desc">Enter your email and we'll send you a reset link.</p>
-
-    {% if message %}
-    <p class="success-message">{{ message }}</p>
-    {% endif %}
-
-    <form method="POST" action="/forgot-password">
-        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-        <input type="email" name="email" placeholder="Email Address" required>
-        <button type="submit">Send Reset Link</button>
-    </form>
-
-    <p><a href="/login">Back to Login</a></p>
-</div>
-
+<body class="payment-page">
+    <div class="payment-card">
+        <div class="success-icon">&#10003;</div>
+        <h1>Payment Successful!</h1>
+        <p>Your payment has been completed successfully.</p>
+        <p>Your cricket lane booking is confirmed.</p>
+        {% if booking_code %}
+        <p>Your booking code: <strong>{{ booking_code }}</strong></p>
+        {% endif %}
+        <a href="/my-bookings" class="main-btn">View My Bookings</a>
+        <a href="/" class="main-btn">Back to Home</a>
+    </div>
 </body>
 </html>

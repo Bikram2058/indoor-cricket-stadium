@@ -29,13 +29,18 @@
     <div class="contact-form"
     <h2>Contact Us</h2>
 
-    <form>
-        <input type="text" placeholder="Your Name" required>
-        <input type="email" placeholder="Email Address" required>
-        <input type="text" placeholder="Subject" required>
-        <textarea placeholder="Your Message" required></textarea>
-        <button type="submit">Send Message</button>
-    </form>
+           {% if success %}
+        <p class="success-message">Thanks! Your message has been sent. We'll get back to you soon.</p>
+        {% endif %}
+
+        <form method="POST" action="/contact">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <input type="text" name="name" placeholder="Your Name" required>
+            <input type="email" name="email" placeholder="Email Address" required>
+            <input type="text" name="subject" placeholder="Subject" required>
+            <textarea name="message" placeholder="Your Message" required></textarea>
+            <button type="submit">Send Message</button>
+        </form>
 </section>
 
 <footer class="footer">

@@ -4,6 +4,41 @@
 <head>
     <title>Admin Dashboard</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+<style>
+        .admin-banner {
+        background: linear-gradient(rgba(7,23,7,0.75), rgba(7,23,7,0.88)), url('/static/images/stadium.png');
+        background-size: cover; background-position: center; padding: 55px 20px; text-align: center; border-radius: 16px; margin: 20px 30px;
+        box-shadow: 0 8px 30px rgba(0,0,0,0.5);
+    }
+    .admin-banner h1 { color: #64dd24; font-size: 36px; margin: 0 0 8px; text-shadow: 0 0 14px rgba(100,221,36,0.5); }
+    .admin-banner p { color: #cfe8cf; margin: 0; font-size: 15px; }
+
+    .admin-section { padding: 10px 30px 40px; }
+    .admin-section h1 { text-align: center; color: #64dd24; font-size: 26px; margin: 34px 0 18px; }
+
+    .stats-boxes { display: flex; gap: 20px; flex-wrap: wrap; justify-content: center; margin-bottom: 36px; }
+    .stat-card {
+        flex: 1; min-width: 200px; max-width: 260px;
+        background: linear-gradient(145deg, #0d2b0d, #071707);
+        border: 1px solid #2c4a2c; border-radius: 14px; padding: 26px;
+        text-align: center; color: #fff; font-size: 16px; font-weight: 600;
+        box-shadow: 0 6px 20px rgba(0,0,0,0.5); transition: transform .2s, box-shadow .2s, border-color .2s;
+    }
+    .stat-card:hover { transform: translateY(-5px); box-shadow: 0 10px 28px rgba(100,221,36,0.25); border-color: #64dd24; }
+
+    .admin-section table {
+        width: 100%; border-collapse: collapse; margin-bottom: 40px;
+        background: rgba(7,23,7,0.6); border-radius: 12px; overflow: hidden; box-shadow: 0 6px 20px rgba(0,0,0,0.4);
+    }
+    .admin-section th { background: linear-gradient(90deg, #64dd24, #3fae16); color: #06230a; padding: 14px; font-size: 14px; text-align: left; }
+    .admin-section td { padding: 12px 14px; color: #e9f5e9; border-bottom: 1px solid #1c331c; font-size: 14px; }
+    .admin-section tr:nth-child(even) td { background: rgba(255,255,255,0.03); }
+    .admin-section tr:hover td { background: rgba(100,221,36,0.08); }
+
+    .delete-btn { background: #e24b4a; color: #fff; padding: 8px 16px; border: none; border-radius: 8px; cursor: pointer; font-size: 13px; text-decoration: none; transition: background .2s; }
+    .delete-btn:hover { background: #ff6b6b; }
+</style>
+
 </head>
 
 <body class="admin-page">
@@ -25,13 +60,18 @@
     </header>
 
     <section class="admin-section">
+            <div class="admin-banner">
+            <h1>Admin Dashboard</h1>
+            <p>Manage bookings, tournaments, members and messages</p>
+        </div>
 
         <h1>Booking Records</h1>
 
-        <div class="stats-boxes">
-            <div class="stat-card">Total Bookings: {{ bookings|length }}</div>
+                <div class="stats-boxes">
+            <div class="stat-card">Total Bookings: {{ total_bookings }}</div>
             <div class="stat-card">Total Tournaments: {{ tournaments|length }}</div>
-            <div class="stat-card">Total Revenue: ${{ (bookings|length * 40) + (tournaments|length * 100) }}</div>
+            <div class="stat-card">Total Members: {{ total_members }}</div>
+            <div class="stat-card">Total Revenue: ${{ total_revenue }}</div>
         </div>
 
         <table>
@@ -113,6 +153,30 @@
     </tr>
     {% endfor %}
     </table>
+    
+        <h1>Contact Messages</h1>
+
+        <table>
+            <tr>
+                <th>ID</th>
+                <th>Name</th>
+                <th>Email</th>
+                <th>Subject</th>
+                <th>Message</th>
+                <th>Received</th>
+            </tr>
+
+            {% for msg in messages %}
+            <tr>
+                <td>{{ msg[0] }}</td>
+                <td>{{ msg[1] }}</td>
+                <td>{{ msg[2] }}</td>
+                <td>{{ msg[3] }}</td>
+                <td>{{ msg[4] }}</td>
+                <td>{{ msg[5] }}</td>
+            </tr>
+            {% endfor %}
+        </table>
 
         
 

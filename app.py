@@ -242,7 +242,19 @@ def booking():
 
         if amount is None:
             return "Invalid booking duration", 400
-
+        # Member discount: logged-in users with an active membership get 20% off
+        if 'user' in session:
+            import sqlite3 as member_db
+            member_conn = member_db.connect('indoor_cricket.db')
+            member_row = member_conn.execute(
+                "SELECT id FROM memberships WHERE user_email = ? "
+                "AND status = 'Active' AND end_date >= date('now') "
+                "ORDER BY id DESC LIMIT 1",
+                (session['user'],)
+            ).fetchone()
+            member_conn.close()
+            if member_row:
+                amount = int(amount * 0.8)
         member = request.form['member']
 
         players = int(request.form['players'])
@@ -640,7 +652,21 @@ def create_checkout_session():
 
     if not booking:
         return redirect('/booking')
-
+       
+    # Build product name, show membership discount if the price was reduced
+    product_name = f"Indoor Cricket Booking - {booking['duration']}"
+    if 'user' in session:
+        import sqlite3 as member_db
+        member_conn = member_db.connect('indoor_cricket.db')
+        member_row = member_conn.execute(
+            "SELECT plan FROM memberships WHERE user_email = ? "
+            "AND status = 'Active' AND end_date >= date('now') "
+            "ORDER BY id DESC LIMIT 1",
+            (session['user'],)
+        ).fetchone()
+        member_conn.close()
+        if member_row:
+            product_name = f"Indoor Cricket Booking - {booking['duration']}  —  {member_row[0]} Member 20% OFF"
     checkout_session = stripe.checkout.Session.create(
         payment_method_types=['card'],
 
@@ -649,7 +675,7 @@ def create_checkout_session():
                 'price_data': {
                     'currency': 'aud',
                     'product_data': {
-                        'name': f"Indoor Cricket Booking - {booking['duration']}"
+                                    'name': product_name
                     },
                     'unit_amount': booking['amount']
                 },
@@ -876,8 +902,29 @@ def membership_payment_success():
     )
 
 
-@app.route('/contact')
+@app.route('/contact', methods=['GET', 'POST'])
 def contact():
+    if request.method == 'POST':
+        name = request.form['name']
+        email = request.form['email']
+        subject = request.form.get('subject', '')
+        message = request.form['message']
+
+        import sqlite3
+        from datetime import datetime
+
+        conn = sqlite3.connect('indoor_cricket.db')
+        cursor = conn.cursor()
+        cursor.execute(
+            "INSERT INTO contact_messages (name, email, subject, message, submitted_at) "
+            "VALUES (?, ?, ?, ?, ?)",
+            (name, email, subject, message, datetime.now().strftime('%Y-%m-%d %H:%M'))
+        )
+        conn.commit()
+        conn.close()
+        audit("CONTACT_MESSAGE", f"from={email}")
+        return render_template('contact.html', success=True)
+
     return render_template('contact.html')
 
 @app.route('/shop')
@@ -1370,10 +1417,28 @@ def admin():
 
     cursor.execute("SELECT * FROM tournaments")
     tournaments = cursor.fetchall()
+    cursor.execute("SELECT * FROM contact_messages ORDER BY id DESC")
+    messages = cursor.fetchall()
+        # Dashboard stats (real numbers)
+    duration_prices = {'30 Minutes - $25': 25, '1 Hour - $40': 40, '2 Hours - $75': 75}
+    cursor.execute("SELECT duration FROM bookings")
+    booking_revenue = sum(duration_prices.get(r[0], 0) for r in cursor.fetchall())
+
+    cursor.execute("SELECT COUNT(*) FROM memberships")
+    total_members = cursor.fetchone()[0]
+
+    cursor.execute("SELECT COALESCE(SUM(price), 0) FROM memberships")
+    membership_revenue = cursor.fetchone()[0]
+
+    cursor.execute("SELECT COALESCE(SUM(total), 0) FROM shop_orders")
+    shop_revenue = cursor.fetchone()[0]
+
+    total_bookings = len(bookings)
+    total_revenue = booking_revenue + membership_revenue + shop_revenue
 
     conn.close()
 
-    return render_template('admin.html', bookings=bookings, tournaments=tournaments)
+    return render_template('admin.html', bookings=bookings, tournaments=tournaments, messages=messages, total_bookings=total_bookings, total_members=total_members, total_revenue=total_revenue)
     
 @app.route('/delete-booking/<int:id>', methods=['POST'])
 @admin_required
