@@ -1381,3 +1381,251 @@ nav a {
     nav a, .topbar nav a{ font-size:14px; }
     .form-section h2, .contact-form h2{ font-size:24px; }
 }
+/* ===== HAMBURGER MENU ===== */
+.nav-toggle{
+    display:none;
+    background:none;
+    border:none;
+    color:#fff;
+    font-size:30px;
+    line-height:1;
+    cursor:pointer;
+    padding:6px 10px;
+}
+
+@media (max-width:768px){
+    .topbar{
+        flex-direction:row;
+        justify-content:space-between;
+        align-items:center;
+        position:relative;
+        gap:0;
+        padding:14px 18px;
+    }
+    .nav-toggle{ display:block; }
+
+    .topbar nav{
+        display:none;
+        position:absolute;
+        top:100%;
+        left:0;
+        right:0;
+        background:#031806;
+        flex-direction:column;
+        align-items:flex-start;
+        gap:4px;
+        padding:12px 18px;
+        border-top:1px solid #2f8f20;
+        box-shadow:0 10px 20px rgba(0,0,0,0.4);
+        z-index:1000;
+    }
+    .topbar nav.open{ display:flex; }
+
+    .topbar nav a,
+    .topbar nav .register-btn,
+    .topbar nav .login-btn,
+    .topbar nav .admin-login-btn{
+        width:100%;
+        padding:12px 0;
+        margin:0;
+        font-size:17px;
+    }
+}
+/* ===== SMALLER "WHY CHOOSE US" CARDS ON MOBILE ===== */
+@media (max-width:768px){
+    .why{ padding:35px 18px; }
+    .why h2{ font-size:24px; }
+    .cards{ gap:16px; margin-top:24px; }
+    .card{ padding:22px 16px; font-size:16px; }
+    .card img{ width:48px; height:48px; margin-bottom:10px; }
+    .card h3{ font-size:18px; }
+    .card p{ font-size:14px; }
+}
+/* ===== Mobile polish (buttons, cards, spacing, menu) ===== */
+@media (max-width:768px){
+
+  /* 1. Bigger, easier-to-tap buttons */
+  .register-btn, .login-btn, .admin-login-btn,
+  button[type="submit"], .btn, .book-btn{
+    width:100%;
+    padding:14px 18px;
+    font-size:17px;
+    border-radius:10px;
+  }
+
+  /* 3. More breathing room between sections */
+  section, .why, .promo, .hero{
+    padding-top:40px;
+    padding-bottom:40px;
+  }
+
+  /* 5. Rounded cards + soft shadow */
+  .card, .promo-box, .plan, .product-card{
+    border-radius:14px;
+    box-shadow:0 6px 18px rgba(0,0,0,0.12);
+  }
+}
+
+/* 2. Hero text scales smoothly on any screen */
+.hero h1{
+  font-size:clamp(28px, 7vw, 56px);
+  line-height:1.15;
+}
+
+/* 4. Smooth hamburger menu open */
+.topbar nav{
+  transition:opacity .2s ease, transform .2s ease;
+}
+@media (max-width:768px){
+  .topbar nav{
+    opacity:0;
+    transform:translateY(-8px);
+    pointer-events:none;
+  }
+  .topbar nav.open{
+    opacity:1;
+    transform:translateY(0);
+    pointer-events:auto;
+  }
+}
+/* ===== Fix: smooth hamburger (no snap) ===== */
+@media (max-width:768px){
+  .topbar nav{
+    display:flex !important;
+    max-height:0;
+    overflow:hidden;
+    opacity:0;
+    transform:none;
+    pointer-events:none;
+    transition:max-height .6s ease, opacity .6s ease;
+  }
+  .topbar nav.open{
+    max-height:600px;
+    opacity:1;
+    pointer-events:auto;
+  }
+}
+/* ===== Extra polish ===== */
+html{ scroll-behavior:smooth; }
+
+/* Buttons press + glow when tapped/hovered */
+.register-btn, .login-btn, .admin-login-btn,
+button[type="submit"], .btn, .book-btn, .hero a{
+  transition:transform .15s ease, box-shadow .2s ease, filter .2s ease;
+}
+.register-btn:active, .login-btn:active, .admin-login-btn:active,
+button[type="submit"]:active, .btn:active, .book-btn:active, .hero a:active{
+  transform:scale(0.97);
+  filter:brightness(1.1);
+  box-shadow:0 0 14px rgba(70,200,40,0.55);
+}
+
+/* Cards gently lift */
+.card, .promo-box, .plan, .product-card{
+  transition:transform .2s ease, box-shadow .2s ease;
+}
+.card:active, .promo-box:active, .plan:active, .product-card:active{
+  transform:translateY(-4px);
+  box-shadow:0 12px 26px rgba(0,0,0,0.2);
+}
+
+/* LIMITED TIME badge rounded + glow */
+.promo-box .limited, .promo-box span, .limited-time{
+  border-radius:20px;
+  box-shadow:0 0 12px rgba(70,200,40,0.5);
+}
+/* ============================================================
+   FINAL SITE-WIDE POLISH  (tuned to the real class names)
+   ============================================================ */
+
+/* Page fades in smoothly on load */
+body{ animation:pageIn .5s ease both; }
+@keyframes pageIn{ from{opacity:0;transform:translateY(8px)} to{opacity:1;transform:translateY(0)} }
+
+/* ---- EVERY button: depth + lift + press feedback ---- */
+.main-btn, .small-btn, .gold-btn, .register-btn, .login-btn,
+.admin-login-btn, .cart-button, .home-button,
+.form-section button, .contact-form button, .plan button,
+.product-card button, .tournament-box button{
+  box-shadow:0 4px 14px rgba(0,0,0,0.25);
+  transition:transform .15s ease, box-shadow .25s ease, filter .2s ease, background .3s ease;
+}
+.main-btn:hover, .small-btn:hover, .gold-btn:hover, .register-btn:hover,
+.login-btn:hover, .admin-login-btn:hover, .cart-button:hover, .home-button:hover,
+.form-section button:hover, .contact-form button:hover, .plan button:hover,
+.product-card button:hover, .tournament-box button:hover{
+  transform:translateY(-2px);
+  filter:brightness(1.06);
+  box-shadow:0 8px 22px rgba(60,180,40,0.4);
+}
+.main-btn:active, .small-btn:active, .gold-btn:active, .register-btn:active,
+.login-btn:active, .admin-login-btn:active, .cart-button:active, .home-button:active,
+.form-section button:active, .contact-form button:active, .plan button:active,
+.product-card button:active, .tournament-box button:active{
+  transform:scale(0.97);
+}
+
+/* ---- Hero title scales smoothly on every screen ---- */
+.hero-text h1{ font-size:clamp(30px, 7vw, 60px); line-height:1.1; }
+
+/* ---- Input fields glow green when clicked (every form) ---- */
+.form-section input, .form-section select, .form-section textarea,
+.contact-form input, .contact-form textarea,
+.tournament-box input, .tournament-box select{
+  transition:box-shadow .2s ease;
+}
+.form-section input:focus, .form-section select:focus, .form-section textarea:focus,
+.contact-form input:focus, .contact-form textarea:focus,
+.tournament-box input:focus, .tournament-box select:focus{
+  outline:none;
+  box-shadow:0 0 0 3px rgba(101,226,47,0.45);
+}
+
+/* ---- "LIMITED TIME" / promo badges: rounded + glow ---- */
+.label{
+  border-radius:20px;
+  box-shadow:0 0 14px rgba(101,226,47,0.5);
+}
+
+/* ---- Admin tables: rows highlight green on hover ---- */
+tbody tr{ transition:background .15s ease; }
+tbody tr:hover{ background:rgba(101,226,47,0.12)!important; }
+
+/* ---- Green themed scrollbar everywhere ---- */
+::-webkit-scrollbar{ width:10px; }
+::-webkit-scrollbar-track{ background:#071607; }
+::-webkit-scrollbar-thumb{ background:#2f8f20; border-radius:10px; }
+::-webkit-scrollbar-thumb:hover{ background:#65e22f; }
+/* ---- Mobile menu links: green highlight on tap/hover ---- */
+@media (max-width:768px){
+  .topbar nav a{
+    border-radius:8px;
+    padding:12px 12px;
+    transition:background .2s ease, color .2s ease, padding-left .2s ease;
+  }
+  .topbar nav a:hover,
+  .topbar nav a:active{
+    background:rgba(101,226,47,0.15);
+    color:#65e22f;
+    padding-left:18px;
+  }
+}
+/* ---- Logout: plain (no green) in mobile menu ---- */
+@media (max-width:768px){
+  .topbar nav a[href*="logout"],
+  .topbar nav .admin-logout-btn{
+    background:transparent !important;
+    color:#fff !important;
+    box-shadow:none !important;
+    border:none !important;
+    width:100%;
+    padding:12px 12px;
+  }
+  .topbar nav a[href*="logout"]:hover,
+  .topbar nav a[href*="logout"]:active,
+  .topbar nav .admin-logout-btn:hover,
+  .topbar nav .admin-logout-btn:active{
+    background:rgba(255,90,90,0.15) !important;
+    color:#ff6b6b !important;
+  }
+}
