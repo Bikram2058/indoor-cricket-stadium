@@ -4,6 +4,21 @@ conn = sqlite3.connect("indoor_cricket.db")
 cursor = conn.cursor()
 
 cursor.execute("""
+CREATE TABLE IF NOT EXISTS users (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    full_name TEXT NOT NULL,
+    email TEXT NOT NULL UNIQUE,
+    password TEXT NOT NULL,
+    phone TEXT,
+    date_of_birth TEXT,
+    gender TEXT,
+    address TEXT,
+    registration_date TEXT,
+    membership TEXT
+)
+""")
+
+cursor.execute("""
 CREATE TABLE IF NOT EXISTS bookings (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     full_name TEXT NOT NULL,
@@ -14,7 +29,9 @@ CREATE TABLE IF NOT EXISTS bookings (
     lane TEXT NOT NULL,
     duration TEXT NOT NULL,
     member TEXT NOT NULL,
-    players INTEGER NOT NULL
+    players INTEGER NOT NULL,
+    booking_code TEXT,
+    checked_in_at TEXT
 )
 """)
 
@@ -30,56 +47,7 @@ CREATE TABLE IF NOT EXISTS tournaments (
     entry_fee TEXT NOT NULL
 )
 """)
-cursor.execute("""
-CREATE TABLE IF NOT EXISTS users (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    full_name TEXT NOT NULL,
-    email TEXT NOT NULL UNIQUE,
-    password TEXT NOT NULL
-)
-""")
-cursor.execute("""
-CREATE TABLE IF NOT EXISTS products (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    name TEXT NOT NULL,
-    category TEXT NOT NULL,
-    description TEXT,
-    price REAL NOT NULL,
-    image TEXT,
-    stock INTEGER NOT NULL DEFAULT 0
-)
-""")
 
-conn.commit()
-conn.close()
-
-print("Database and bookings table created successfully!")
-
-import sqlite3
-
-conn = sqlite3.connect('indoor_cricket.db')
-cursor = conn.cursor()
-
-new_columns = {
-    'phone': 'TEXT',
-    'date_of_birth': 'TEXT',
-    'gender': 'TEXT',
-    'address': 'TEXT',
-    'registration_date': 'TEXT'
-}
-
-cursor.execute("PRAGMA table_info(users)")
-existing_columns = {
-    column[1] for column in cursor.fetchall()
-}
-
-for column, data_type in new_columns.items():
-    if column not in existing_columns:
-        cursor.execute(
-            f"ALTER TABLE users ADD COLUMN {column} {data_type}"
-        )
-
-# Membership table
 cursor.execute("""
 CREATE TABLE IF NOT EXISTS memberships (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -93,8 +61,58 @@ CREATE TABLE IF NOT EXISTS memberships (
 )
 """)
 
+cursor.execute("""
+CREATE TABLE IF NOT EXISTS products (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    name TEXT NOT NULL,
+    price REAL NOT NULL,
+    image TEXT NOT NULL,
+    stock INTEGER NOT NULL DEFAULT 0
+)
+""")
+
+cursor.execute("""
+CREATE TABLE IF NOT EXISTS contact_messages (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    name TEXT NOT NULL,
+    email TEXT NOT NULL,
+    subject TEXT,
+    message TEXT NOT NULL,
+    submitted_at TEXT
+)
+""")
+
+cursor.execute("""
+CREATE TABLE IF NOT EXISTS password_resets (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    email TEXT NOT NULL,
+    token TEXT NOT NULL,
+    expires_at TEXT NOT NULL
+)
+""")
+
+cursor.execute("""
+CREATE TABLE IF NOT EXISTS shop_orders (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_email TEXT NOT NULL,
+    stripe_session_id TEXT NOT NULL,
+    total REAL NOT NULL,
+    payment_status TEXT NOT NULL DEFAULT 'paid',
+    order_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+)
+""")
+
+cursor.execute("""
+CREATE TABLE IF NOT EXISTS shop_order_items (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    order_id INTEGER NOT NULL,
+    product_id INTEGER NOT NULL,
+    product_name TEXT NOT NULL,
+    price REAL NOT NULL,
+    quantity INTEGER NOT NULL
+)
+""")
+
 conn.commit()
 conn.close()
-
-print("User profile database updated successfully!")
-
+print("All tables created successfully!")
