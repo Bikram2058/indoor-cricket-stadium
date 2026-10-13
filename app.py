@@ -1338,10 +1338,10 @@ def admin():
     conn = sqlite3.connect('indoor_cricket.db')
     cursor = conn.cursor()
 
-    cursor.execute("SELECT * FROM bookings")
+    cursor.execute("SELECT * FROM bookings ORDER BY id DESC")
     bookings = cursor.fetchall()
 
-    cursor.execute("SELECT * FROM tournaments")
+    cursor.execute("SELECT * FROM tournaments ORDER BY id DESC")
     tournaments = cursor.fetchall()
     cursor.execute("SELECT * FROM contact_messages ORDER BY id DESC")
     messages = cursor.fetchall()
