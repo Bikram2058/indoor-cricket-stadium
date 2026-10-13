@@ -1294,3 +1294,90 @@ nav a {
 .cart-button:hover {
     background: #45b915;
 }
+/* ============================================
+   MOBILE RESPONSIVE STYLES
+   ============================================ */
+
+/* Tablets */
+@media (max-width: 992px){
+    .promo-box,
+    .cards,
+    .shop-grid{ grid-template-columns:repeat(2,1fr); }
+    .membership-cards{ grid-template-columns:1fr; }
+    .footer-container{ grid-template-columns:1fr 1fr; }
+}
+
+/* Phones */
+@media (max-width: 768px){
+    /* top bar + nav */
+    .topbar{
+        height:auto;
+        flex-direction:column;
+        padding:15px 18px;
+        gap:12px;
+    }
+    nav{ flex-wrap:wrap; justify-content:center; gap:10px 14px; }
+    nav a, .topbar nav a{ margin:0; font-size:15px; }
+    .logo{ font-size:22px; }
+    .register-btn, .login-btn, .admin-login-btn, .admin-logout-btn{ padding:10px 16px; }
+
+    /* hero */
+    .hero{ height:auto; padding:55px 20px; }
+    .hero-text h1{ font-size:34px; }
+    .hero-text p, .hero p{ font-size:16px; }
+
+    /* section padding */
+    .promo, .why, .shop-section, .membership-section,
+    .contact-section, .login-section, .register-section,
+    .tournament-section, .admin-section, .footer{
+        padding:40px 18px;
+    }
+
+    /* all multi-column grids -> single column */
+    .promo-box, .cards, .shop-grid,
+    .membership-cards, .footer-container{
+        grid-template-columns:1fr;
+        gap:20px;
+    }
+    .promo-box div{ border-right:none; border-bottom:1px solid #2f8f20; }
+
+    /* headings */
+    .why h2, .shop-section h2, .contact-form h2{ font-size:28px; }
+    .promo-box h2, .plan h3{ font-size:26px; }
+
+    /* fixed-width boxes -> fluid */
+    .form-section, .contact-form, .tournament-box, .prize-box{
+        width:100%;
+        max-width:420px;
+        margin:30px auto;
+        padding:30px 20px;
+        box-sizing:border-box;
+    }
+
+    /* tournament page stacks */
+    .tournament-section{
+        flex-direction:column;
+        align-items:center;
+        gap:25px;
+        min-height:auto;
+    }
+
+    /* fixed backgrounds are janky on mobile */
+    .shop-section, .booking-page, .membership-section,
+    .contact-section, .login-section, .register-section,
+    .tournament-section{
+        background-attachment:scroll;
+    }
+
+    /* admin stats + tables */
+    .stats-boxes{ flex-direction:column; align-items:center; gap:15px; }
+    table{ display:block; overflow-x:auto; white-space:nowrap; font-size:14px; }
+}
+
+/* Small phones */
+@media (max-width: 420px){
+    .hero-text h1{ font-size:28px; }
+    .logo{ font-size:19px; }
+    nav a, .topbar nav a{ font-size:14px; }
+    .form-section h2, .contact-form h2{ font-size:24px; }
+}

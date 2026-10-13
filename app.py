@@ -90,6 +90,57 @@ Indoor Cricket Centre
             audit("EMAIL_FAILED", f"to={to_email} error={type(e).__name__}")
             return False
 
+def send_login_email(to_email):
+    from email.mime.text import MIMEText
+    from datetime import datetime
+
+    msg = MIMEText(
+        f"Hello,\n\n"
+        f"A login to your Indoor Cricket Centre account was just detected.\n\n"
+        f"Time: {datetime.now().strftime('%d %b %Y, %I:%M %p')}\n\n"
+        f"If this was you, no action is needed.\n"
+        f"If you did not log in, please change your password immediately.\n\n"
+        f"Indoor Cricket Centre"
+    )
+    msg['Subject'] = 'New login to your account'
+    msg['From'] = os.getenv("MAIL_USERNAME")
+    msg['To'] = to_email
+
+    try:
+        with smtplib.SMTP('smtp.gmail.com', 587, timeout=20) as smtp:
+            smtp.starttls()
+            smtp.login(os.getenv("MAIL_USERNAME"), os.getenv("MAIL_PASSWORD"))
+            smtp.send_message(msg)
+        return True
+    except Exception as e:
+        audit("LOGIN_EMAIL_FAILED", f"to={to_email} error={type(e).__name__}")
+        return False
+
+def send_reset_email(to_email, reset_link):
+    from email.mime.text import MIMEText
+    msg = MIMEText(
+        "Hello,\n\n"
+        "We received a request to reset your Indoor Cricket Centre password.\n\n"
+        "Click the link below to set a new password (valid for 1 hour):\n"
+        f"{reset_link}\n\n"
+        "If you did not request this, you can safely ignore this email.\n\n"
+        "Indoor Cricket Centre"
+    )
+    msg['Subject'] = 'Reset your password'
+    msg['From'] = os.getenv("MAIL_USERNAME")
+    msg['To'] = to_email
+
+    try:
+        with smtplib.SMTP('smtp.gmail.com', 587, timeout=20) as smtp:
+            smtp.starttls()
+            smtp.login(os.getenv("MAIL_USERNAME"), os.getenv("MAIL_PASSWORD"))
+            smtp.send_message(msg)
+        return True
+    except Exception as e:
+        audit("RESET_EMAIL_FAILED", f"to={to_email} error={type(e).__name__}")
+        return False
+
+
 # Session security settings
 app.config['SESSION_COOKIE_HTTPONLY'] = True
 app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'
@@ -443,6 +494,7 @@ def login():
             session['user'] = email
             session.permanent = True
             audit("LOGIN_SUCCESS", f"user={email}")
+            send_login_email(email)
 
             # Return to Shop if the user originally clicked Shop
             if request.form.get('next') == 'shop':
@@ -529,7 +581,21 @@ def create_checkout_session():
 
     if not booking:
         return redirect('/booking')
-
+       
+    # Build product name, show membership discount if the price was reduced
+    product_name = f"Indoor Cricket Booking - {booking['duration']}"
+    if 'user' in session:
+        import sqlite3 as member_db
+        member_conn = member_db.connect('indoor_cricket.db')
+        member_row = member_conn.execute(
+            "SELECT plan FROM memberships WHERE user_email = ? "
+            "AND status = 'Active' AND end_date >= date('now') "
+            "ORDER BY id DESC LIMIT 1",
+            (session['user'],)
+        ).fetchone()
+        member_conn.close()
+        if member_row:
+            product_name = f"Indoor Cricket Booking - {booking['duration']}  —  {member_row[0]} Member 20% OFF"
     checkout_session = stripe.checkout.Session.create(
 
         line_items=[
@@ -537,7 +603,7 @@ def create_checkout_session():
                 'price_data': {
                     'currency': 'aud',
                     'product_data': {
-                        'name': f"Indoor Cricket Booking - {booking['duration']}"
+                                    'name': product_name
                     },
                     'unit_amount': booking['amount']
                 },
@@ -763,8 +829,29 @@ def membership_payment_success():
     )
 
 
-@app.route('/contact')
+@app.route('/contact', methods=['GET', 'POST'])
 def contact():
+    if request.method == 'POST':
+        name = request.form['name']
+        email = request.form['email']
+        subject = request.form.get('subject', '')
+        message = request.form['message']
+
+        import sqlite3
+        from datetime import datetime
+
+        conn = sqlite3.connect('indoor_cricket.db')
+        cursor = conn.cursor()
+        cursor.execute(
+            "INSERT INTO contact_messages (name, email, subject, message, submitted_at) "
+            "VALUES (?, ?, ?, ?, ?)",
+            (name, email, subject, message, datetime.now().strftime('%Y-%m-%d %H:%M'))
+        )
+        conn.commit()
+        conn.close()
+        audit("CONTACT_MESSAGE", f"from={email}")
+        return render_template('contact.html', success=True)
+
     return render_template('contact.html')
 
 @app.route('/shop')
@@ -1256,10 +1343,28 @@ def admin():
 
     cursor.execute("SELECT * FROM tournaments")
     tournaments = cursor.fetchall()
+    cursor.execute("SELECT * FROM contact_messages ORDER BY id DESC")
+    messages = cursor.fetchall()
+        # Dashboard stats (real numbers)
+    duration_prices = {'30 Minutes - $25': 25, '1 Hour - $40': 40, '2 Hours - $75': 75}
+    cursor.execute("SELECT duration FROM bookings")
+    booking_revenue = sum(duration_prices.get(r[0], 0) for r in cursor.fetchall())
+
+    cursor.execute("SELECT COUNT(*) FROM memberships")
+    total_members = cursor.fetchone()[0]
+
+    cursor.execute("SELECT COALESCE(SUM(price), 0) FROM memberships")
+    membership_revenue = cursor.fetchone()[0]
+
+    cursor.execute("SELECT COALESCE(SUM(total), 0) FROM shop_orders")
+    shop_revenue = cursor.fetchone()[0]
+
+    total_bookings = len(bookings)
+    total_revenue = booking_revenue + membership_revenue + shop_revenue
 
     conn.close()
 
-    return render_template('admin.html', bookings=bookings, tournaments=tournaments)
+    return render_template('admin.html', bookings=bookings, tournaments=tournaments, messages=messages, total_bookings=total_bookings, total_members=total_members, total_revenue=total_revenue)
     
 @app.route('/delete-booking/<int:id>', methods=['POST'])
 @admin_required
@@ -1296,6 +1401,12 @@ def user_dashboard():
     )
 
     user = cursor.fetchone()
+    cursor.execute(
+            "SELECT plan, end_date, status FROM memberships "
+            "WHERE user_email = ? ORDER BY id DESC LIMIT 1",
+            (session['user'],)
+        )
+    membership = cursor.fetchone()
     conn.close()
 
     if not user:
@@ -1304,8 +1415,30 @@ def user_dashboard():
 
     return render_template(
         'user_dashboard.html',
-        user=user
+        user=user,
+        membership=membership
+
     )
+@app.route('/cancel-booking/<int:id>', methods=['POST'])
+def cancel_booking(id):
+    if 'user' not in session:
+        return redirect('/login')
+
+    import sqlite3
+    conn = sqlite3.connect('indoor_cricket.db')
+    cursor = conn.cursor()
+
+    # Only cancel a booking that belongs to the logged-in user
+    cursor.execute(
+        "DELETE FROM bookings WHERE id = ? AND email = ?",
+        (id, session['user'])
+    )
+    conn.commit()
+    conn.close()
+
+    audit("BOOKING_CANCELLED", f"user={session['user']} booking_id={id}")
+    return redirect('/my-bookings')
+
 
 @app.route('/my-bookings')
 def my_bookings():
@@ -1618,5 +1751,9 @@ def logout():
     return redirect('/login')
 
 if __name__ == '__main__':
-    app.run(debug=False)
+      # ===== DEMO TOGGLE =====
+    # Test 1 - HTTP (insecure, password visible):
+    app.run(debug=False, threaded=True)
 
+    # Test 2 - HTTPS (secure, encrypted):
+    #app.run(debug=False, ssl_context=('cert.pem', 'key.pem'), threaded=True)
