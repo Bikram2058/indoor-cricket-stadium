@@ -155,117 +155,244 @@ def add_security_headers(response):
 def home():
     return render_template('index.html')
 
+# ============================================================
+# BOOKING SYSTEM (slot grid)
+# Change these settings to suit the centre.
+# ============================================================
+LANES = ['Lane 1', 'Lane 2', 'Lane 3', 'Lane 4']
+OPEN_HOUR = 9          # first slot starts 9:00 am
+CLOSE_HOUR = 22        # everything must finish by 10:00 pm
+SLOT_MINUTES = 30      # start times every 30 minutes
+MAX_PLAYERS = 8
+BOOK_AHEAD_DAYS = 365
+
+# Duration label (saved in the database) -> (minutes, price in cents)
+DURATIONS = {
+    '30 Minutes - $25': (30, 2500),
+    '1 Hour - $40': (60, 4000),
+    '2 Hours - $75': (120, 7500),
+}
+
+# Discount (%) for members with an active membership. 0 = no discount.
+MEMBER_DISCOUNT_PERCENT = {
+    'Bronze': 0,
+    'Silver': 0,
+    'Gold': 0,
+}
+
+
+def get_active_membership(email):
+    """Return the user's active membership plan name, or None."""
+    import sqlite3
+    conn = sqlite3.connect('indoor_cricket.db')
+    cursor = conn.cursor()
+    cursor.execute("""
+        SELECT plan FROM memberships
+        WHERE user_email = ?
+          AND status = 'Active'
+          AND start_date <= ?
+          AND end_date >= ?
+        ORDER BY end_date DESC
+        LIMIT 1
+    """, (email, datetime.now().date().isoformat(),
+          datetime.now().date().isoformat()))
+    row = cursor.fetchone()
+    conn.close()
+    return row[0] if row else None
+
+
+def booking_price(duration, plan):
+    """Price in cents for a duration, after any member discount."""
+    base = DURATIONS[duration][1]
+    discount = MEMBER_DISCOUNT_PERCENT.get(plan, 0) if plan else 0
+    return round(base * (100 - discount) / 100)
+
+
+def slot_start_times():
+    """All possible start times in a day, e.g. ['09:00', '09:30', ...]."""
+    times = []
+    t = datetime(2000, 1, 1, OPEN_HOUR, 0)
+    end = datetime(2000, 1, 1, CLOSE_HOUR, 0)
+    while t < end:
+        times.append(t.strftime('%H:%M'))
+        t += timedelta(minutes=SLOT_MINUTES)
+    return times
+
+
+def get_booked_ranges(booking_date):
+    """Return {lane: [(start, end), ...]} for every booking on a date."""
+    import sqlite3
+    conn = sqlite3.connect('indoor_cricket.db')
+    cursor = conn.cursor()
+    cursor.execute("""
+        SELECT lane, booking_time, duration
+        FROM bookings
+        WHERE booking_date = ?
+    """, (booking_date,))
+    rows = cursor.fetchall()
+    conn.close()
+
+    booked = {lane: [] for lane in LANES}
+    for lane, time_text, duration in rows:
+        try:
+            start = datetime.strptime(f"{booking_date} {time_text}", "%Y-%m-%d %H:%M")
+        except ValueError:
+            continue
+        minutes = DURATIONS.get(duration, (60, 0))[0]
+        booked.setdefault(lane, []).append((start, start + timedelta(minutes=minutes)))
+    return booked
+
+
+def slot_status(booking_date, time_text, minutes, lane_ranges, now):
+    """'free', 'booked', 'past' or 'closed' for one lane + start time."""
+    start = datetime.strptime(f"{booking_date} {time_text}", "%Y-%m-%d %H:%M")
+    end = start + timedelta(minutes=minutes)
+
+    if start <= now:
+        return 'past'
+    if end > start.replace(hour=CLOSE_HOUR, minute=0):
+        return 'closed'
+    for booked_start, booked_end in lane_ranges:
+        if start < booked_end and end > booked_start:
+            return 'booked'
+    return 'free'
+
+
+def parse_booking_date(text):
+    """Return a date if it is valid and inside the booking window, else None."""
+    try:
+        chosen = datetime.strptime(text or '', '%Y-%m-%d').date()
+    except ValueError:
+        return None
+    today = datetime.now().date()
+    if chosen < today or chosen > today + timedelta(days=BOOK_AHEAD_DAYS):
+        return None
+    return chosen
+
+
+@app.route('/slots')
+def slots():
+    """Availability grid for one date + duration (used by booking.html)."""
+    if 'user' not in session:
+        return {'error': 'Please log in.'}, 401
+
+    booking_date = request.args.get('date', '')
+    duration = request.args.get('duration', '')
+
+    if not parse_booking_date(booking_date):
+        return {'error': 'Please choose a valid date.'}, 400
+    if duration not in DURATIONS:
+        return {'error': 'Please choose a duration.'}, 400
+
+    minutes = DURATIONS[duration][0]
+    booked = get_booked_ranges(booking_date)
+    now = datetime.now()
+
+    grid = {}
+    for time_text in slot_start_times():
+        grid[time_text] = {
+            lane: slot_status(booking_date, time_text, minutes, booked[lane], now)
+            for lane in LANES
+        }
+
+    plan = get_active_membership(session['user'])
+
+    return {
+        'lanes': LANES,
+        'times': slot_start_times(),
+        'grid': grid,
+        'price_cents': booking_price(duration, plan),
+        'minutes': minutes,
+    }
+
+
 @app.route('/booking', methods=['GET', 'POST'])
 def booking():
     if 'user' not in session:
         return redirect('/login')
 
+    import sqlite3
+
+    email = session['user']
+    plan = get_active_membership(email)
+
+    # Pre-fill name and phone from the user's profile
+    conn = sqlite3.connect('indoor_cricket.db')
+    cursor = conn.cursor()
+    cursor.execute("SELECT full_name, phone FROM users WHERE email = ?", (email,))
+    profile = cursor.fetchone() or ('', '')
+    conn.close()
+
+    def show_form(error=None):
+        return render_template(
+            'booking.html',
+            error=error,
+            form=request.form if request.method == 'POST' else {},
+            profile_name=profile[0] or '',
+            profile_phone=profile[1] or '',
+            member_plan=plan,
+            durations=[
+                {'label': label, 'minutes': mins,
+                 'price': booking_price(label, plan) / 100,
+                 'base_price': cents / 100}
+                for label, (mins, cents) in DURATIONS.items()
+            ],
+            max_players=MAX_PLAYERS,
+            book_ahead_days=BOOK_AHEAD_DAYS,
+        )
+
     if request.method == 'POST':
 
-        full_name = request.form['full_name']
-        phone = request.form['phone']
-        email = session['user']
-        booking_date = request.form['booking_date']
-        booking_time = request.form['booking_time']
-        lane = request.form['lane']
-        duration = request.form['duration']
+        full_name = request.form.get('full_name', '').strip()
+        phone = request.form.get('phone', '').strip()
+        booking_date = request.form.get('booking_date', '')
+        booking_time = request.form.get('booking_time', '')
+        lane = request.form.get('lane', '')
+        duration = request.form.get('duration', '')
 
-        from datetime import datetime, timedelta
+        # Validate every field on the server (never trust the browser)
+        if not full_name or len(full_name) > 100:
+            return show_form("Please enter your full name.")
 
-        today = datetime.now().date()
-        selected_date = datetime.strptime(booking_date, '%Y-%m-%d').date()
+        if not phone.isascii() or not phone.isdigit() or not 8 <= len(phone) <= 15:
+            return show_form("Please enter a valid phone number.")
 
-        if selected_date < today:
-            return render_template(
-                'booking.html',
-                error="You cannot book a date in the past."
-            )
+        if not parse_booking_date(booking_date):
+            return show_form("Please choose a valid date.")
 
-        price_map = {
-            '30 Minutes - $25': 2500,
-            '1 Hour - $40': 4000,
-            '2 Hours - $75': 7500
-        }
+        if duration not in DURATIONS:
+            return show_form("Please choose a duration.")
 
-        amount = price_map.get(duration)
+        if lane not in LANES:
+            return show_form("Please choose a lane.")
 
-        if amount is None:
-            return "Invalid booking duration", 400
+        if booking_time not in slot_start_times():
+            return show_form("Please choose a time slot from the grid.")
 
-        member = request.form['member']
+        try:
+            players = int(request.form.get('players', ''))
+        except ValueError:
+            return show_form("Please enter the number of players.")
 
-        players = int(request.form['players'])
+        if players < 1 or players > MAX_PLAYERS:
+            return show_form(f"A maximum of {MAX_PLAYERS} players is allowed per lane.")
 
-        if players < 1 or players > 8:
-            return render_template(
-                'booking.html',
-                error="A maximum of 8 players is allowed per lane."
-            )
-
-        # Check for overlapping bookings
-        import sqlite3
-
-        duration_minutes = {
-            '30 Minutes - $25': 30,
-            '1 Hour - $40': 60,
-            '2 Hours - $75': 120
-        }
-
-        new_duration = duration_minutes.get(duration)
-
-        if new_duration is None:
-            return "Invalid booking duration", 400
-
-        new_start = datetime.strptime(
-            f"{booking_date} {booking_time}",
-            "%Y-%m-%d %H:%M"
+        # Check the slot is still free right now
+        minutes = DURATIONS[duration][0]
+        status = slot_status(
+            booking_date, booking_time, minutes,
+            get_booked_ranges(booking_date)[lane], datetime.now()
         )
-        new_end = new_start + timedelta(minutes=new_duration)
 
-        conn = sqlite3.connect('indoor_cricket.db')
-        cursor = conn.cursor()
+        if status != 'free':
+            messages = {
+                'booked': "Sorry, that slot has just been taken. Please pick another time.",
+                'past': "That time has already passed. Please pick a later time.",
+                'closed': "That booking would finish after closing time. Please pick an earlier time or a shorter duration.",
+            }
+            return show_form(messages[status])
 
-        cursor.execute("""
-            SELECT booking_time, duration
-            FROM bookings
-            WHERE booking_date = ?
-            AND lane = ?
-        """, (booking_date, lane))
-
-        existing_bookings = cursor.fetchall()
-        conn.close()
-
-        for existing_time, existing_duration in existing_bookings:
-
-            existing_minutes = duration_minutes.get(existing_duration)
-
-            if existing_minutes is None:
-                continue
-
-            existing_start = datetime.strptime(
-                f"{booking_date} {existing_time}",
-                "%Y-%m-%d %H:%M"
-            )
-            existing_end = existing_start + timedelta(minutes=existing_minutes)
-
-            if new_start < existing_end and new_end > existing_start:
-
-                if new_start >= existing_start:
-                    next_available = existing_end.strftime("%I:%M %p")
-                    error_message = (
-                        f"This lane is currently booked. "
-                        f"Next available at {next_available}."
-                    )
-                else:
-                    next_booking = existing_start.strftime("%I:%M %p")
-                    error_message = (
-                        f"Selected duration overlaps another booking "
-                        f"starting at {next_booking}. "
-                        f"Please choose a shorter duration."
-                    )
-
-                return render_template('booking.html', error=error_message)
-
+        # Same keys as before, so Stripe checkout works unchanged
         session['pending_booking'] = {
             'full_name': full_name,
             'phone': phone,
@@ -274,111 +401,14 @@ def booking():
             'booking_time': booking_time,
             'lane': lane,
             'duration': duration,
-            'member': member,
+            'member': 'Yes' if plan else 'No',
             'players': players,
-            'amount': amount
+            'amount': booking_price(duration, plan)
         }
 
         return redirect('/create-checkout-session')
 
-    return render_template('booking.html')
-@app.route('/check-availability')
-def check_availability():
-    booking_date = request.args.get('date')
-    booking_time = request.args.get('time')
-    lane = request.args.get('lane')
-
-    if not booking_date or not booking_time or not lane:
-        return {
-            'available': False,
-            'message': 'Please select lane, time and date.'
-        }
-
-    import sqlite3
-    from datetime import datetime, timedelta
-
-    selected_start = datetime.strptime(
-        f"{booking_date} {booking_time}",
-        "%Y-%m-%d %H:%M"
-    )
-
-    conn = sqlite3.connect('indoor_cricket.db')
-    cursor = conn.cursor()
-
-    cursor.execute("""
-        SELECT booking_time, duration
-        FROM bookings
-        WHERE booking_date = ?
-        AND lane = ?
-    """, (booking_date, lane))
-
-    existing_bookings = cursor.fetchall()
-    conn.close()
-
-    duration_minutes = {
-        '30 Minutes - $25': 30,
-        '1 Hour - $40': 60,
-        '2 Hours - $75': 120
-    }
-
-    for existing_time, existing_duration in existing_bookings:
-
-        minutes = duration_minutes.get(existing_duration)
-
-        if minutes is None:
-            continue
-
-        existing_start = datetime.strptime(
-            f"{booking_date} {existing_time}",
-            "%Y-%m-%d %H:%M"
-        )
-
-        existing_end = existing_start + timedelta(minutes=minutes)
-
-        # Selected time is inside an existing booking
-        if existing_start <= selected_start < existing_end:
-
-            next_available = existing_end.strftime("%I:%M %p")
-
-            return {
-                'available': False,
-                'message': f'Lane is currently booked. Next available at {next_available}.'
-            }
-
-    return {
-        'available': True,
-        'message': 'Lane is available!'
-    }
-
-@app.route('/unavailable-dates')
-def unavailable_dates():
-
-    booking_time = request.args.get('time')
-    lane = request.args.get('lane')
-
-    if not booking_time or not lane:
-        return {'unavailable_dates': []}
-
-    import sqlite3
-
-    conn = sqlite3.connect('indoor_cricket.db')
-    cursor = conn.cursor()
-
-    cursor.execute("""
-        SELECT booking_date
-        FROM bookings
-        WHERE booking_time = ?
-        AND lane = ?
-    """, (booking_time, lane))
-
-    rows = cursor.fetchall()
-    conn.close()
-
-    dates = [row[0] for row in rows]
-
-    return {
-        'unavailable_dates': dates
-    }
+    return show_form()
 
 @app.route('/login', methods=['GET', 'POST'])
 @limiter.limit("5 per minute", methods=['POST'])
@@ -501,7 +531,6 @@ def create_checkout_session():
         return redirect('/booking')
 
     checkout_session = stripe.checkout.Session.create(
-        payment_method_types=['card'],
 
         line_items=[
             {
@@ -638,7 +667,6 @@ def create_membership_checkout():
     amount = MEMBERSHIP_PLANS[plan]
 
     checkout_session = stripe.checkout.Session.create(
-        payment_method_types=['card'],
         line_items=[{
             'price_data': {
                 'currency': 'aud',
@@ -943,7 +971,6 @@ def shop_checkout():
     conn.close()
 
     checkout_session = stripe.checkout.Session.create(
-        payment_method_types=['card'],
         line_items=line_items,
         mode='payment',
         success_url=(

@@ -1,12 +1,199 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Book Cricket Arena</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
-    <link rel="stylesheet"
-      href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr@4.6.13/dist/flatpickr.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr@4.6.13/dist/themes/dark.css">
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr@4.6.13"></script>
 
-<script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+    <style>
+        /* ---------- Booking page styles (only used on this page) ---------- */
+        .bk-wrap {
+            max-width: 1000px;
+            margin: 40px auto;
+            padding: 0 16px;
+            color: #fff;
+        }
+        .bk-wrap h2 { text-align: center; margin-bottom: 6px; }
+        .bk-sub { text-align: center; color: #b9c2cc; margin: 0 0 24px; }
+
+        .bk-member {
+            display: inline-block;
+            background: rgba(85, 230, 40, 0.15);
+            color: #55e628;
+            border: 1px solid rgba(85, 230, 40, 0.4);
+            padding: 4px 12px;
+            border-radius: 999px;
+            font-size: 0.85rem;
+            font-weight: 600;
+        }
+
+        .booking-error {
+            background: rgba(255, 77, 77, 0.15);
+            border: 1px solid #ff4d4d;
+            color: #ffb3b3;
+            padding: 12px 16px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+        }
+
+        .bk-step {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            border-radius: 14px;
+            padding: 20px;
+            margin-bottom: 18px;
+        }
+        .bk-step h3 {
+            margin: 0 0 14px;
+            font-size: 1.05rem;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .bk-num {
+            width: 28px; height: 28px;
+            border-radius: 50%;
+            background: #55e628;
+            color: #0b1a05;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 0.9rem;
+            flex-shrink: 0;
+        }
+
+        .bk-row { display: flex; gap: 18px; flex-wrap: wrap; }
+        .bk-row > div { flex: 1 1 260px; }
+
+        /* Calendar */
+        .bk-calendar .flatpickr-calendar.inline { margin: 0 auto; }
+
+        /* Duration buttons */
+        .bk-durations { display: flex; flex-direction: column; gap: 10px; }
+        .bk-durations label {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 14px 16px;
+            border: 2px solid rgba(255, 255, 255, 0.15);
+            border-radius: 10px;
+            cursor: pointer;
+            transition: border-color .15s, background .15s;
+        }
+        .bk-durations label:hover { border-color: rgba(85, 230, 40, 0.6); }
+        .bk-durations input { position: absolute; opacity: 0; pointer-events: none; }
+        .bk-durations label:has(input:checked) {
+            border-color: #55e628;
+            background: rgba(85, 230, 40, 0.12);
+        }
+        .bk-durations input:focus-visible + span { outline: 2px solid #55e628; outline-offset: 4px; }
+        .bk-price { font-weight: 700; color: #55e628; }
+        .bk-price s { color: #8a949e; font-weight: 400; margin-right: 6px; }
+
+        /* Slot grid */
+        .bk-legend { display: flex; gap: 16px; flex-wrap: wrap; font-size: 0.85rem; color: #b9c2cc; margin-bottom: 12px; }
+        .bk-legend span::before {
+            content: ""; display: inline-block; width: 12px; height: 12px;
+            border-radius: 3px; margin-right: 6px; vertical-align: -1px;
+        }
+        .lg-free::before { background: rgba(85, 230, 40, 0.25); border: 1px solid #55e628; }
+        .lg-booked::before { background: rgba(255, 255, 255, 0.08); }
+        .lg-picked::before { background: #55e628; }
+
+        .bk-grid-scroll { overflow-x: auto; max-height: 460px; overflow-y: auto; border-radius: 10px; }
+        .bk-grid {
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 6px;
+            min-width: 340px;
+        }
+        .bk-grid th:first-child,
+        .bk-grid td.bk-time {
+            position: sticky;
+            left: 0;
+            background: #1a1f26;
+            z-index: 2;
+        }
+        .bk-grid th {
+            position: sticky; top: 0;
+            background: #1a1f26;
+            padding: 8px 4px;
+            font-size: 0.85rem;
+            z-index: 1;
+        }
+        .bk-grid td.bk-time { font-size: 0.85rem; color: #b9c2cc; white-space: nowrap; text-align: right; padding-right: 6px; }
+        .bk-slot {
+            width: 100%;
+            padding: 10px 4px;
+            border-radius: 8px;
+            border: 1px solid transparent;
+            font-size: 0.8rem;
+            font-weight: 600;
+            cursor: pointer;
+            font-family: inherit;
+        }
+        .bk-slot.free {
+            background: rgba(85, 230, 40, 0.15);
+            border-color: rgba(85, 230, 40, 0.5);
+            color: #b8f5a3;
+        }
+        .bk-slot.free:hover { background: rgba(85, 230, 40, 0.3); }
+        .bk-slot.picked { background: #55e628; color: #0b1a05; border-color: #55e628; }
+        .bk-slot:disabled {
+            background: rgba(255, 255, 255, 0.05);
+            color: #5d6670;
+            cursor: not-allowed;
+        }
+        .bk-placeholder { color: #8a949e; text-align: center; padding: 30px 10px; }
+
+        /* Details */
+        .bk-fields { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; }
+        .bk-fields label { display: block; font-size: 0.85rem; color: #b9c2cc; margin-bottom: 4px; }
+        .bk-fields input {
+            width: 100%;
+            box-sizing: border-box;
+            padding: 12px;
+            border-radius: 8px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            background: rgba(0, 0, 0, 0.25);
+            color: #fff;
+            font-size: 1rem;
+        }
+
+        /* Summary + pay */
+        .bk-summary {
+            background: rgba(85, 230, 40, 0.08);
+            border: 1px solid rgba(85, 230, 40, 0.35);
+            border-radius: 14px;
+            padding: 18px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 16px;
+            flex-wrap: wrap;
+        }
+        .bk-summary-text { line-height: 1.5; }
+        .bk-summary-text strong { font-size: 1.05rem; }
+        .bk-total { font-size: 1.6rem; font-weight: 800; color: #55e628; }
+        .booking-btn:disabled { opacity: 0.45; cursor: not-allowed; }
+        .bk-note { text-align: center; color: #8a949e; font-size: 0.85rem; margin-top: 12px; }
+
+        /* Phones */
+        @media (max-width: 600px) {
+            .bk-step { padding: 16px 12px; }
+            .bk-grid { border-spacing: 4px; }
+            .bk-grid td.bk-time { font-size: 0.75rem; padding-right: 2px; }
+            .bk-grid th { font-size: 0.75rem; }
+            .bk-slot { padding: 10px 2px; font-size: 0.75rem; }
+            .bk-summary { flex-direction: column; align-items: stretch; }
+            .bk-summary > div:last-child { display: flex; justify-content: space-between; align-items: center; text-align: left !important; }
+        }
+    </style>
 </head>
 <body class="booking-page">
 
@@ -20,258 +207,305 @@
         <a href="/shop">Shop</a>
         <a href="/contact">Contact</a>
         {% if session.get('user') %}
-    <a href="/dashboard">Dashboard</a>
-    <a class="register-btn" href="/logout">Logout</a>
-{% else %}
-    <a href="/login">Login</a>
-    <a class="register-btn" href="/register">Register</a>
-{% endif %}
+        <a href="/dashboard">Dashboard</a>
+        <a class="register-btn" href="/logout">Logout</a>
+        {% else %}
+        <a href="/login">Login</a>
+        <a class="register-btn" href="/register">Register</a>
+        {% endif %}
     </nav>
 </header>
 
-<section class="form-section">
+<section class="bk-wrap">
     <h2>Book Your Cricket Lane</h2>
+    <p class="bk-sub">
+        Pick a day, choose how long you want to play, then tap a free slot.
+        {% if member_plan %}<br><span class="bk-member">✓ {{ member_plan }} member</span>{% endif %}
+    </p>
 
     {% if error %}
-    <div class="booking-error">
-        {{ error }}
-    </div>
+    <div class="booking-error">{{ error }}</div>
     {% endif %}
 
-    <form method="POST" action="/booking">
+    <form method="POST" action="/booking" id="booking-form">
         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-    {% if success %}
-    <p class="success-message">{{ success }}</p>
-    {% endif %}
-    
-        <input type="text" name="full_name" placeholder="Full Name" required>
-        <input type="tel"
-            name="phone"
-            placeholder="Enter phone number"
-            inputmode="numeric"
-            pattern="[0-9]+"
-            oninput="this.value=this.value.replace(/[^0-9]/g,'')"
-            required>
-        <input type="email" name="email" placeholder="Email Address (Optional)">
-        
-        
+        <input type="hidden" name="booking_date" id="booking_date" value="{{ form.get('booking_date', '') }}">
+        <input type="hidden" name="lane" id="lane" value="">
+        <input type="hidden" name="booking_time" id="booking_time" value="">
 
-        <select name="lane" id="lane" required>
-            <option value="">Select Lane</option>
-            <option>Lane 1</option>
-            <option>Lane 2</option>
-            <option>Lane 3</option>
-            <option>Lane 4</option>
-        </select>
+        <!-- Step 1 + 2: date and duration -->
+        <div class="bk-row">
+            <div class="bk-step">
+                <h3><span class="bk-num">1</span> Choose a date</h3>
+                <div class="bk-calendar" id="calendar"></div>
+            </div>
 
-        <input type="time"
-               name="booking_time"
-               id="booking_time"
-               required>
+            <div class="bk-step">
+                <h3><span class="bk-num">2</span> How long?</h3>
+                <div class="bk-durations">
+                    {% for d in durations %}
+                    <label>
+                        <input type="radio" name="duration" value="{{ d.label }}"
+                               data-minutes="{{ d.minutes }}" data-price="{{ '%.2f'|format(d.price) }}"
+                               {% if form.get('duration') == d.label or (not form.get('duration') and loop.index == 2) %}checked{% endif %}
+                               required>
+                        <span>{{ d.label.split(' - ')[0] }}</span>
+                        <span class="bk-price">
+                            {% if d.price < d.base_price %}<s>${{ '%.2f'|format(d.base_price) }}</s>{% endif %}
+                            ${{ '%.2f'|format(d.price) }}
+                        </span>
+                    </label>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
 
-               <input type="text"
-       name="booking_date"
-       id="booking_date"
-       placeholder="Select Available Date"
-       required>
+        <!-- Step 3: slot grid -->
+        <div class="bk-step">
+            <h3><span class="bk-num">3</span> Pick a lane and start time</h3>
+            <div class="bk-legend">
+                <span class="lg-free">Available</span>
+                <span class="lg-booked">Unavailable</span>
+                <span class="lg-picked">Your pick</span>
+            </div>
+            <div class="bk-grid-scroll" id="grid-area">
+                <p class="bk-placeholder">Choose a date to see available slots.</p>
+            </div>
+        </div>
 
-        <p id="availability-message"></p>
+        <!-- Step 4: details -->
+        <div class="bk-step">
+            <h3><span class="bk-num">4</span> Your details</h3>
+            <div class="bk-fields">
+                <div>
+                    <label for="full_name">Full name</label>
+                    <input type="text" id="full_name" name="full_name" maxlength="100" required
+                           value="{{ form.get('full_name', profile_name) }}">
+                </div>
+                <div>
+                    <label for="phone">Phone number</label>
+                    <input type="tel" id="phone" name="phone" inputmode="numeric"
+                           pattern="[0-9]{8,15}" maxlength="15" required
+                           title="8 to 15 digits"
+                           oninput="this.value=this.value.replace(/[^0-9]/g,'')"
+                           value="{{ form.get('phone', profile_phone) }}">
+                </div>
+                <div>
+                    <label for="players">Number of players (max {{ max_players }})</label>
+                    <input type="number" id="players" name="players" min="1" max="{{ max_players }}" required
+                           value="{{ form.get('players', '') }}">
+                </div>
+            </div>
+        </div>
 
-        <select name="duration" required>
-    <option value="">Select Duration</option>
-    <option>30 Minutes - $25</option>
-    <option>1 Hour - $40</option>
-    <option>2 Hours - $75</option>
-</select>
-
-<select name="member" required>
-    <option value="">Are you a member?</option>
-    <option>Yes</option>
-    <option>No</option>
-</select>
-
-        <input type="number" name="players" placeholder="Number of Players" min="1" max="8" required>
-
-    <button type="submit" class="booking-btn">
-        Confirm & Pay
-    </button>
-
-        <p class="booking-note">You will receive confirmation after submitting your booking.</p>
-
+        <!-- Summary + pay -->
+        <div class="bk-summary">
+            <div class="bk-summary-text" id="summary">
+                <strong>No slot selected yet</strong><br>
+                <span style="color:#b9c2cc">Pick a free slot above to continue.</span>
+            </div>
+            <div style="text-align:right">
+                <div class="bk-total" id="total">—</div>
+                <button type="submit" class="booking-btn" id="pay-btn" disabled>Confirm &amp; Pay</button>
+            </div>
+        </div>
+        <p class="bk-note">You'll pay securely with Stripe. Your booking code is emailed to {{ session.get('user') }}.</p>
     </form>
-
 </section>
-
-<script>
-function showBookingMessage(event){
-    event.preventDefault();
-    document.getElementById("booking-success").innerHTML =
-    "✅ Your booking request has been submitted successfully!";
-}
-</script>   
 
 <footer class="footer">
     <p>© 2026 Indoor Cricket Centre | Melbourne, Australia</p>
 </footer>
 
 <script>
-const dateInput = document.getElementById('booking_date');
-const timeInput = document.getElementById('booking_time');
-const laneInput = document.getElementById('lane');
-const message = document.getElementById('availability-message');
+const dateInput   = document.getElementById('booking_date');
+const laneInput   = document.getElementById('lane');
+const timeInput   = document.getElementById('booking_time');
+const gridArea    = document.getElementById('grid-area');
+const summary     = document.getElementById('summary');
+const totalEl     = document.getElementById('total');
+const payBtn      = document.getElementById('pay-btn');
+const durationRadios = document.querySelectorAll('input[name="duration"]');
 
-// Allow booking from today up to 1 year ahead
-const today = new Date();
+let currentPrice = null;
+let requestId = 0;
 
-const maxDate = new Date();
-maxDate.setFullYear(today.getFullYear() + 1);
-
-function formatDate(date) {
-    const year = date.getFullYear();
-    const month = String(date.getMonth() + 1).padStart(2, '0');
-    const day = String(date.getDate()).padStart(2, '0');
-
-    return `${year}-${month}-${day}`;
+function selectedDuration() {
+    const r = document.querySelector('input[name="duration"]:checked');
+    return r ? r : null;
 }
 
-dateInput.min = formatDate(today);
-dateInput.max = formatDate(maxDate);
+function to12h(hhmm) {
+    const [h, m] = hhmm.split(':').map(Number);
+    const ampm = h >= 12 ? 'pm' : 'am';
+    const h12 = h % 12 === 0 ? 12 : h % 12;
+    return `${h12}:${String(m).padStart(2, '0')} ${ampm}`;
+}
 
-async function checkAvailability() {
+function addMinutes(hhmm, mins) {
+    const [h, m] = hhmm.split(':').map(Number);
+    const total = h * 60 + m + mins;
+    return `${String(Math.floor(total / 60)).padStart(2, '0')}:${String(total % 60).padStart(2, '0')}`;
+}
 
-    const date = dateInput.value;
-    const time = timeInput.value;
-    const lane = laneInput.value;
+function prettyDate(ymd) {
+    const [y, m, d] = ymd.split('-').map(Number);
+    return new Date(y, m - 1, d).toLocaleDateString('en-AU',
+        { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' });
+}
 
-    // Wait until all three are selected
-    if (!date || !time || !lane) {
-        message.textContent = '';
+function clearPick() {
+    laneInput.value = '';
+    timeInput.value = '';
+    updateSummary();
+}
+
+function updateSummary() {
+    const dur = selectedDuration();
+    if (laneInput.value && timeInput.value && dur) {
+        const mins = Number(dur.dataset.minutes);
+        summary.innerHTML = '';
+        const title = document.createElement('strong');
+        title.textContent = `${laneInput.value} · ${prettyDate(dateInput.value)}`;
+        const detail = document.createElement('span');
+        detail.style.color = '#b9c2cc';
+        detail.textContent = `${to12h(timeInput.value)} – ${to12h(addMinutes(timeInput.value, mins))} (${dur.value.split(' - ')[0]})`;
+        summary.append(title, document.createElement('br'), detail);
+        totalEl.textContent = '$' + (currentPrice !== null ? (currentPrice / 100).toFixed(2) : dur.dataset.price);
+        payBtn.disabled = false;
+    } else {
+        summary.innerHTML = '<strong>No slot selected yet</strong><br><span style="color:#b9c2cc">Pick a free slot above to continue.</span>';
+        totalEl.textContent = '—';
+        payBtn.disabled = true;
+    }
+}
+
+async function loadSlots() {
+    const dur = selectedDuration();
+    clearPick();
+
+    if (!dateInput.value || !dur) {
+        gridArea.innerHTML = '<p class="bk-placeholder">Choose a date to see available slots.</p>';
         return;
     }
 
-    message.textContent = 'Checking availability...';
-    message.style.color = 'white';
+    const thisRequest = ++requestId;
+    gridArea.innerHTML = '<p class="bk-placeholder">Loading available slots…</p>';
 
     try {
-        const response = await fetch(
-            `/check-availability?date=${encodeURIComponent(date)}&time=${encodeURIComponent(time)}&lane=${encodeURIComponent(lane)}`
-        );
+        const res = await fetch(`/slots?date=${encodeURIComponent(dateInput.value)}&duration=${encodeURIComponent(dur.value)}`);
+        const data = await res.json();
+        if (thisRequest !== requestId) return;   // a newer request is on its way
 
-        const data = await response.json();
-
-        if (data.available) {
-            message.textContent = '✓ Lane is available';
-            message.style.color = '#55e628';
-        } else {
-            message.textContent = '✕ ' + data.message;
-            message.style.color = '#ff4d4d';
+        if (!res.ok) {
+            gridArea.innerHTML = '';
+            const p = document.createElement('p');
+            p.className = 'bk-placeholder';
+            p.textContent = data.error || 'Unable to load slots.';
+            gridArea.append(p);
+            return;
         }
 
-    } catch (error) {
-        message.textContent = 'Unable to check availability.';
-        message.style.color = '#ff4d4d';
+        currentPrice = data.price_cents;
+        renderGrid(data);
+    } catch (err) {
+        console.error(err);
+        gridArea.innerHTML = '<p class="bk-placeholder">Unable to load slots. Please try again.</p>';
     }
 }
 
-dateInput.addEventListener('change', checkAvailability);
-timeInput.addEventListener('change', checkAvailability);
-laneInput.addEventListener('change', checkAvailability);
+function renderGrid(data) {
+    const table = document.createElement('table');
+    table.className = 'bk-grid';
 
-// Disable time and date initially
-timeInput.disabled = true;
-dateInput.disabled = true;
+    const head = table.createTHead().insertRow();
+    head.appendChild(document.createElement('th'));
+    data.lanes.forEach(lane => {
+        const th = document.createElement('th');
+        th.textContent = lane;
+        head.appendChild(th);
+    });
 
-laneInput.addEventListener("change", function () {
+    const body = table.createTBody();
+    let anyFree = false;
 
-    if (this.value !== "") {
-        // Lane selected - allow time selection
-        timeInput.disabled = false;
+    data.times.forEach(time => {
+        const statuses = data.lanes.map(l => data.grid[time][l]);
+        // Hide rows that are entirely in the past or after closing
+        if (statuses.every(s => s === 'past' || s === 'closed')) return;
 
-        // Date stays disabled until a time is selected
-        dateInput.disabled = true;
-        dateInput.value = "";
-    } else {
-        timeInput.disabled = true;
-        dateInput.disabled = true;
+        const row = body.insertRow();
+        const tc = row.insertCell();
+        tc.className = 'bk-time';
+        tc.textContent = to12h(time);
 
-        timeInput.value = "";
-        dateInput.value = "";
-    }
-});
+        data.lanes.forEach(lane => {
+            const status = data.grid[time][lane];
+            const cell = row.insertCell();
+            const btn = document.createElement('button');
+            btn.type = 'button';
+            btn.className = 'bk-slot ' + status;
+            btn.dataset.lane = lane;
+            btn.dataset.time = time;
 
-timeInput.addEventListener("change", function () {
+            if (status === 'free') {
+                anyFree = true;
+                btn.textContent = 'Book';
+                btn.setAttribute('aria-label', `${lane} at ${to12h(time)}`);
+                btn.addEventListener('click', () => pickSlot(btn));
+            } else {
+                btn.disabled = true;
+                btn.textContent = status === 'booked' ? 'Taken' : '—';
+            }
+            cell.appendChild(btn);
+        });
+    });
 
-    if (this.value !== "" && laneInput.value !== "") {
-        dateInput.disabled = false;
-    } else {
-        dateInput.disabled = true;
-        dateInput.value = "";
-    }
-});
-
-let bookingCalendar = flatpickr("#booking_date", {
-    dateFormat: "Y-m-d",
-    minDate: "today",
-    maxDate: new Date().fp_incr(365),
-    disableMobile: true,
-    clickOpens: false
-});
-
-async function loadAvailableDates() {
-
-    const lane = laneInput.value;
-    const time = timeInput.value;
-
-    if (!lane || !time) {
-        bookingCalendar.set("disable", []);
-        bookingCalendar.clear();
+    gridArea.innerHTML = '';
+    if (!body.rows.length || !anyFree) {
+        gridArea.innerHTML = '<p class="bk-placeholder">No free slots for this date and duration. Try another day or a shorter session.</p>';
         return;
     }
-
-    try {
-        const response = await fetch(
-            `/unavailable-dates?lane=${encodeURIComponent(lane)}&time=${encodeURIComponent(time)}`
-        );
-
-        const data = await response.json();
-
-        // Disable dates already booked for this lane + time
-        bookingCalendar.set(
-            "disable",
-            data.unavailable_dates
-        );
-
-        bookingCalendar.clear();
-
-        // Allow calendar to open
-        bookingCalendar.set("clickOpens", true);
-
-        message.textContent =
-            "Select an available date.";
-
-        message.style.color = "#64dd24";
-
-    } catch (error) {
-
-        console.error(error);
-
-        message.textContent =
-            "Unable to load available dates.";
-
-        message.style.color = "red";
-    }
+    gridArea.appendChild(table);
 }
 
-timeInput.addEventListener("change", loadAvailableDates);
-laneInput.addEventListener("change", function () {
+function pickSlot(btn) {
+    gridArea.querySelectorAll('.bk-slot.picked').forEach(b => b.classList.remove('picked'));
+    btn.classList.add('picked');
+    laneInput.value = btn.dataset.lane;
+    timeInput.value = btn.dataset.time;
+    updateSummary();
+}
 
-    bookingCalendar.clear();
-    bookingCalendar.set("clickOpens", false);
-
+// Calendar shown inline (always open)
+flatpickr('#calendar', {
+    inline: true,
+    dateFormat: 'Y-m-d',
+    minDate: 'today',
+    maxDate: new Date().fp_incr({{ book_ahead_days }}),
+    defaultDate: dateInput.value || null,
+    locale: { firstDayOfWeek: 1 },
+    onChange: (dates, dateStr) => {
+        dateInput.value = dateStr;
+        loadSlots();
+    }
 });
 
-</script>
+durationRadios.forEach(r => r.addEventListener('change', loadSlots));
 
+document.getElementById('booking-form').addEventListener('submit', (e) => {
+    if (!laneInput.value || !timeInput.value || !dateInput.value) {
+        e.preventDefault();
+        alert('Please pick a free slot first.');
+        return;
+    }
+    payBtn.disabled = true;
+    payBtn.textContent = 'Redirecting to payment…';
+});
+
+// If the page reloaded with a date (e.g. after an error), show its slots again
+if (dateInput.value) loadSlots();
+</script>
 
 </body>
 </html>
