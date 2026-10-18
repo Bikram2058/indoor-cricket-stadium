@@ -500,7 +500,7 @@ def login():
             if request.form.get('next') == 'shop':
                 return redirect('/shop')
 
-            return redirect('/dashboard')
+            return redirect('/')
         
         else:
             audit("LOGIN_FAILED", f"user={email}")
