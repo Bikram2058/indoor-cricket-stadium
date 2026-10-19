@@ -112,6 +112,15 @@
     <div class="container">
 
         <h1>My Bookings</h1>
+                {% if request.args.get('msg') == 'refunded' %}
+        <div style="background:#0f3d16;border:1px solid #65e22f;color:#d9ffce;padding:14px 18px;border-radius:10px;margin-bottom:20px;font-weight:bold;">
+          ✅ Booking cancelled — your payment has been refunded to your card. It can take a few days to appear on your statement.
+        </div>
+        {% elif request.args.get('msg') == 'cancelled' %}
+        <div style="background:#1a1a1a;border:1px solid #444;color:#ddd;padding:14px 18px;border-radius:10px;margin-bottom:20px;">
+          Booking cancelled.
+        </div>
+        {% endif %}
 
         {% if bookings %}
 
@@ -180,7 +189,7 @@
 </td>
                     <td>
                         {% if booking['status'] == 'Upcoming' %}
-                        <form method="POST" action="/cancel-booking/{{ booking['id'] }}" onsubmit="return confirm('Cancel this booking?');">
+                        <form method="POST" action="/cancel-booking/{{ booking['id'] }}" onsubmit="return confirm('Cancel this booking? Your payment will be refunded to your card.');">
                             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                             <button type="submit" class="delete-btn">Cancel</button>
                         </form>
