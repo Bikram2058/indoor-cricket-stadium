@@ -29,14 +29,28 @@
 <section class="membership-section">
     <h2>Membership Plans</h2>
     <p class="membership-subtitle">Choose the best plan for your cricket sessions.</p>
+        {% if membership %}
+    <div style="max-width:720px;margin:0 auto 28px;padding:24px 28px;border-radius:18px;text-align:center;
+         background:linear-gradient(135deg, rgba(212,175,55,0.18), rgba(184,134,11,0.10));
+         border:1px solid #d4af37;box-shadow:0 0 24px rgba(212,175,55,0.25);">
+      <p style="margin:0 0 6px;color:#ffe9a8;letter-spacing:1px;font-size:13px;font-weight:bold;text-transform:uppercase;">Your Current Plan</p>
+      <h3 style="margin:0 0 6px;font-size:30px;color:#ffd966;">⭐ {{ membership['plan'] }}</h3>
+      <p style="margin:0 0 16px;color:#ddd;">{{ membership['status'] }} · valid until {{ membership['end_date'] }}</p>
+      <a href="#plans" style="display:inline-block;padding:12px 28px;border-radius:10px;background:linear-gradient(135deg,#4ad22a,#2f9f1b);color:#fff;text-decoration:none;font-weight:bold;">Change Plan</a>
+    </div>
+    {% else %}
+    <div style="max-width:720px;margin:0 auto 28px;padding:22px 28px;border-radius:18px;text-align:center;background:rgba(255,255,255,0.05);border:1px solid #2f8f20;">
+      <p style="margin:0 0 14px;color:#ddd;font-size:16px;">You don't have a membership yet.</p>
+      <a href="#plans" style="display:inline-block;padding:12px 28px;border-radius:10px;background:linear-gradient(135deg,#4ad22a,#2f9f1b);color:#fff;text-decoration:none;font-weight:bold;">Choose a Plan</a>
+    </div>
+    {% endif %}
 
     <div class="membership-cards">
 
         <div class="plan">
             <h3>Bronze</h3>
-            <p class="price">$25/month</p>
-            <p>✔ 2 bookings per week</p>
-            <p>✔ Basic lane access</p>
+            <p class="price">$20/month</p>
+            <p>✔ 5% off every booking</p>
             <form action="/create-membership-checkout" method="POST">
     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
     <input type="hidden" name="plan" value="Bronze">
@@ -47,9 +61,8 @@
         <div class="plan featured-plan">
             <p class="popular-badge">Most Popular</p>
             <h3>Silver</h3>
-            <p class="price">$40/month</p>
-            <p>✔ 4 bookings per week</p>
-            <p>✔ Priority booking</p>
+            <p class="price">$30/month</p>
+            <p>✔ 10% off every booking</p>
             <form action="/create-membership-checkout" method="POST">
     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
     <input type="hidden" name="plan" value="Silver">
@@ -59,9 +72,8 @@
 
         <div class="plan">
             <h3>Gold</h3>
-            <p class="price">$55/month</p>
-            <p>✔ Unlimited bookings</p>
-            <p>✔ Tournament discounts</p>
+            <p class="price">$35/month</p>
+            <p>✔ 15% off every booking</p>
             <form action="/create-membership-checkout" method="POST">
     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
     <input type="hidden" name="plan" value="Gold">
@@ -79,5 +91,6 @@ Members receive exclusive discounts, priority lane access and tournament rewards
     <p>© 2026 Indoor Cricket Centre | Melbourne, Australia</p>
 </footer>
 
+    <script src="{{ url_for('static', filename='mobile-nav.js') }}"></script>
 </body>
 </html>

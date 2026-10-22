@@ -94,7 +94,7 @@
             {% for booking in bookings %}
 
             <tr>
-                <td>{{ booking[0] }}</td>
+                <td>{{ loop.index }}</td>
                 <td>{{ booking[1] }}</td>
                 <td>{{ booking[2] }}</td>
                 <td>{{ booking[3] }}</td>
@@ -133,7 +133,7 @@
 
     {% for tournament in tournaments %}
     <tr>
-        <td>{{ tournament[0] }}</td>
+        <td>{{ loop.index }}</td>
         <td>{{ tournament[1] }}</td>
         <td>{{ tournament[2] }}</td>
         <td>{{ tournament[3] }}</td>
@@ -169,7 +169,7 @@
 
             {% for msg in messages %}
             <tr>
-                <td>{{ msg[0] }}</td>
+                <td>{{ loop.index }}</td>
                 <td>{{ msg[1] }}</td>
                 <td>{{ msg[2] }}</td>
                 <td>{{ msg[3] }}</td>
@@ -183,5 +183,6 @@
 
     </section>
 
+    <script src="{{ url_for('static', filename='mobile-nav.js') }}"></script>
 </body>
 </html>

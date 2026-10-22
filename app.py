@@ -1,3 +1,4 @@
+from dbm import sqlite3
 from functools import wraps
 
 def admin_required(f):
@@ -500,7 +501,7 @@ def login():
             if request.form.get('next') == 'shop':
                 return redirect('/shop')
 
-            return redirect('/dashboard')
+            return redirect('/')
         
         else:
             audit("LOGIN_FAILED", f"user={email}")
@@ -671,8 +672,8 @@ def payment_success():
     cursor.execute("""
         INSERT INTO bookings
         (full_name, phone, email, booking_date,
-        booking_time, lane, duration, member, players, booking_code)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        booking_time, lane, duration, member, players, booking_code, stripe_session_id)
+                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     """, (
         booking['full_name'],
         booking['phone'],
@@ -683,8 +684,8 @@ def payment_success():
         booking['duration'],
         booking['member'],
         booking['players'],
-        booking_code
-        
+        booking_code,
+        session_id
     ))
 
     conn.commit()
@@ -711,7 +712,18 @@ def membership():
     if 'user' not in session:
         return redirect('/login')
     
-    return render_template('membership.html')
+    import sqlite3
+    conn = sqlite3.connect('indoor_cricket.db')
+    conn.row_factory = sqlite3.Row
+    cursor = conn.cursor()
+    cursor.execute(
+        "SELECT plan, end_date, status FROM memberships "
+        "WHERE user_email = ? ORDER BY id DESC LIMIT 1",
+        (session['user'],)
+    )
+    membership = cursor.fetchone()
+    conn.close()
+    return render_template('membership.html', membership=membership)
 # Membership plans - prices set on the server (cents), never trusted from the browser
 MEMBERSHIP_PLANS = {
     'Bronze': 2500,
@@ -1338,10 +1350,10 @@ def admin():
     conn = sqlite3.connect('indoor_cricket.db')
     cursor = conn.cursor()
 
-    cursor.execute("SELECT * FROM bookings")
+    cursor.execute("SELECT * FROM bookings ORDER BY id DESC")
     bookings = cursor.fetchall()
 
-    cursor.execute("SELECT * FROM tournaments")
+    cursor.execute("SELECT * FROM tournaments ORDER BY id DESC")
     tournaments = cursor.fetchall()
     cursor.execute("SELECT * FROM contact_messages ORDER BY id DESC")
     messages = cursor.fetchall()
@@ -1421,6 +1433,43 @@ def user_dashboard():
     )
 @app.route('/cancel-booking/<int:id>', methods=['POST'])
 def cancel_booking(id):
+    if 'user' not in session:
+        return redirect('/login')
+
+    import sqlite3
+    conn = sqlite3.connect('indoor_cricket.db')
+    cursor = conn.cursor()
+
+    cursor.execute(
+        "SELECT stripe_session_id FROM bookings WHERE id = ? AND email = ?",
+        (id, session['user'])
+    )
+    row = cursor.fetchone()
+
+    refunded = False
+    if row and row[0]:
+        try:
+            cs = stripe.checkout.Session.retrieve(row[0])
+            if cs.payment_intent:
+                stripe.Refund.create(payment_intent=cs.payment_intent)
+                refunded = True
+                audit("BOOKING_REFUNDED", f"user={session['user']} booking_id={id}")
+
+        except stripe.StripeError as e:
+         audit("REFUND_FAILED", f"user={session['user']} booking_id={id} err={e}")
+
+    cursor.execute(
+        "DELETE FROM bookings WHERE id = ? AND email = ?",
+        (id, session['user'])
+    )
+    conn.commit()
+    conn.close()
+
+    audit("BOOKING_CANCELLED", f"user={session['user']} booking_id={id}")
+    if refunded:
+        return redirect('/my-bookings?msg=refunded')
+    return redirect('/my-bookings?msg=cancelled')
+  
     if 'user' not in session:
         return redirect('/login')
 
@@ -1756,4 +1805,4 @@ if __name__ == '__main__':
     app.run(debug=False, threaded=True)
 
     # Test 2 - HTTPS (secure, encrypted):
-    #app.run(debug=False, ssl_context=('cert.pem', 'key.pem'), threaded=True)
+   #app.run(debug=False, ssl_context=('cert.pem', 'key.pem'), threaded=True)
