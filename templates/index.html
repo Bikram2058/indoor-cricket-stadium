@@ -19,7 +19,6 @@
         <a href="/contact">Contact</a>
         {% if session.get('user') %}
     <a href="/dashboard">Dashboard</a>
-    <a href="/change-password">Change Password</a>
     <a class="register-btn" href="/logout">Logout</a>
 {% else %}
     <a href="/login">Login</a>
@@ -53,17 +52,6 @@
             <a href="/membership" class="gold-btn">View Plans</a>
         </div>
 
-        <div class="promo-card tournament-bg">
-            <h2>WEEKEND <br><span>TOURNAMENT</span></h2>
-            <p>Register your team and compete to win prizes.</p>
-            <a href="/tournament" class="small-btn">Join Now</a>
-        </div>
-
-        <div class="promo-card group-bg">
-            <h2>GROUP <br><span>BOOKINGS</span></h2>
-            <p>Perfect for friends, teams, schools and events.</p>
-            <a href="/booking" class="small-btn">Reserve Lane</a>
-        </div>
     </div>
 </section>
 

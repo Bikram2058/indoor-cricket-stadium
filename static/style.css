@@ -1381,3 +1381,51 @@ nav a {
     nav a, .topbar nav a{ font-size:14px; }
     .form-section h2, .contact-form h2{ font-size:24px; }
 }
+
+/* Home page promo: 2 cards instead of 4 */
+.promo-box {
+    grid-template-columns: repeat(2, 1fr);
+}
+
+@media (max-width: 768px) {
+    .promo-box {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* Header: keep logo on one line so it doesn't overlap the page */
+@media (min-width: 769px) {
+    .topbar .logo {
+        white-space: nowrap;
+        font-size: 24px;
+        line-height: 1.2;
+        flex-shrink: 0;
+    }
+
+    .topbar nav {
+        display: flex;
+        align-items: center;
+        gap: 22px;
+    }
+
+    .topbar nav a {
+        margin: 0;
+        font-size: 17px;
+    }
+}
+
+/* Menu starts right after the logo on every page */
+@media (min-width: 769px) {
+    .topbar {
+        justify-content: flex-start;
+        gap: 60px;
+    }
+
+    .topbar nav {
+        flex: 1;
+    }
+
+    .topbar nav .register-btn {
+        margin-left: auto;
+    }
+}
