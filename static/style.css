@@ -1629,3 +1629,4 @@ tbody tr:hover{ background:rgba(101,226,47,0.12)!important; }
     color:#ff6b6b !important;
   }
 }
+.promo-box{ grid-template-columns:repeat(2,1fr); }

@@ -227,9 +227,9 @@ DURATIONS = {
 
 # Discount (%) for members with an active membership. 0 = no discount.
 MEMBER_DISCOUNT_PERCENT = {
-    'Bronze': 0,
-    'Silver': 0,
-    'Gold': 0,
+    'Bronze': 5,
+    'Silver': 10,
+    'Gold': 20,
 }
 
 
@@ -596,7 +596,8 @@ def create_checkout_session():
         ).fetchone()
         member_conn.close()
         if member_row:
-            product_name = f"Indoor Cricket Booking - {booking['duration']}  —  {member_row[0]} Member 20% OFF"
+            pct = MEMBER_DISCOUNT_PERCENT.get(member_row[0], 0)
+            product_name = f"Indoor Cricket Booking - {booking['duration']}  —  {member_row[0]} Member {pct}% OFF"
     checkout_session = stripe.checkout.Session.create(
 
         line_items=[
