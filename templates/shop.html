@@ -31,10 +31,8 @@
     <p>Buy quality cricket gear for training, matches, and tournaments.</p>
 
     <div class="cart-navigation">
-    <a href="/cart" class="cart-button">
-        🛒 View Cart
-    </a>
-</div>
+        <a href="/cart" class="cart-button">🛒 View Cart</a>
+    </div>
 
     <div class="shop-grid">
 
@@ -43,18 +41,10 @@
             <h3>Cricket Bat</h3>
             <p>$120</p>
             <form action="/add-to-cart" method="POST">
-    <input type="hidden"
-           name="csrf_token"
-           value="{{ csrf_token() }}">
-
-    <input type="hidden"
-           name="product_id"
-           value="1">
-
-    <button type="submit">
-        Add to Cart
-    </button>
-</form>
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <input type="hidden" name="product_id" value="1">
+                <button type="submit">Add to Cart</button>
+            </form>
         </div>
 
         <div class="product-card">
@@ -62,18 +52,10 @@
             <h3>Cricket Ball</h3>
             <p>$25</p>
             <form action="/add-to-cart" method="POST">
-    <input type="hidden"
-           name="csrf_token"
-           value="{{ csrf_token() }}">
-
-    <input type="hidden"
-           name="product_id"
-           value="2">
-
-    <button type="submit">
-        Add to Cart
-    </button>
-</form>
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <input type="hidden" name="product_id" value="2">
+                <button type="submit">Add to Cart</button>
+            </form>
         </div>
 
         <div class="product-card">
@@ -81,18 +63,10 @@
             <h3>Batting Gloves</h3>
             <p>$45</p>
             <form action="/add-to-cart" method="POST">
-    <input type="hidden"
-           name="csrf_token"
-           value="{{ csrf_token() }}">
-
-    <input type="hidden"
-           name="product_id"
-           value="3">
-
-    <button type="submit">
-        Add to Cart
-    </button>
-</form>
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <input type="hidden" name="product_id" value="3">
+                <button type="submit">Add to Cart</button>
+            </form>
         </div>
 
         <div class="product-card">
@@ -100,18 +74,54 @@
             <h3>Leg Pads</h3>
             <p>$80</p>
             <form action="/add-to-cart" method="POST">
-    <input type="hidden"
-           name="csrf_token"
-           value="{{ csrf_token() }}">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <input type="hidden" name="product_id" value="4">
+                <button type="submit">Add to Cart</button>
+            </form>
+        </div>
 
-    <input type="hidden"
-           name="product_id"
-           value="4">
+        <div class="product-card">
+            <img src="/static/images/helmet.png">
+            <h3>Cricket Helmet</h3>
+            <p>$125</p>
+            <form action="/add-to-cart" method="POST">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <input type="hidden" name="product_id" value="5">
+                <button type="submit">Add to Cart</button>
+            </form>
+        </div>
 
-    <button type="submit">
-        Add to Cart
-    </button>
-</form>
+        <div class="product-card">
+            <img src="/static/images/stumps.png">
+            <h3>Stumps Set</h3>
+            <p>$75</p>
+            <form action="/add-to-cart" method="POST">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <input type="hidden" name="product_id" value="6">
+                <button type="submit">Add to Cart</button>
+            </form>
+        </div>
+
+        <div class="product-card">
+            <img src="/static/images/combo.png">
+            <h3>Cricket Kit Combo</h3>
+            <p>$300</p>
+            <form action="/add-to-cart" method="POST">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <input type="hidden" name="product_id" value="7">
+                <button type="submit">Add to Cart</button>
+            </form>
+        </div>
+
+        <div class="product-card">
+            <img src="/static/images/cap.png">
+            <h3>Cricket Australia Cap</h3>
+            <p>$35</p>
+            <form action="/add-to-cart" method="POST">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <input type="hidden" name="product_id" value="8">
+                <button type="submit">Add to Cart</button>
+            </form>
         </div>
 
     </div>

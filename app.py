@@ -140,6 +140,82 @@ def send_reset_email(to_email, reset_link):
     except Exception as e:
         audit("RESET_EMAIL_FAILED", f"to={to_email} error={type(e).__name__}")
         return False
+    
+def send_welcome_email(to_email, full_name):
+    from email.mime.text import MIMEText
+    msg = MIMEText(
+        f"Hi {full_name},\n\n"
+        "Welcome to Indoor Cricket Centre! Your account has been created successfully.\n\n"
+        "You can now book lanes, join a membership, and shop for cricket gear.\n\n"
+        "See you at the nets!\n\n"
+        "Indoor Cricket Centre"
+    )
+    msg['Subject'] = 'Welcome to Indoor Cricket Centre'
+    msg['From'] = os.getenv("MAIL_USERNAME")
+    msg['To'] = to_email
+    try:
+        with smtplib.SMTP('smtp.gmail.com', 587, timeout=20) as smtp:
+            smtp.starttls()
+            smtp.login(os.getenv("MAIL_USERNAME"), os.getenv("MAIL_PASSWORD"))
+            smtp.send_message(msg)
+        return True
+    except Exception as e:
+        audit("WELCOME_EMAIL_FAILED", f"to={to_email} error={type(e).__name__}")
+        return False
+
+
+def send_membership_email(to_email, plan, price, end_date):
+    from email.mime.text import MIMEText
+    msg = MIMEText(
+        "Hello,\n\n"
+        "Thank you for joining Indoor Cricket Centre membership!\n\n"
+        f"    Plan:        {plan}\n"
+        f"    Price:       ${price:.2f} AUD\n"
+        f"    Valid until: {end_date}\n\n"
+        "Enjoy your member discount on every booking.\n\n"
+        "Indoor Cricket Centre"
+    )
+    msg['Subject'] = f'Your {plan} membership is active'
+    msg['From'] = os.getenv("MAIL_USERNAME")
+    msg['To'] = to_email
+    try:
+        with smtplib.SMTP('smtp.gmail.com', 587, timeout=20) as smtp:
+            smtp.starttls()
+            smtp.login(os.getenv("MAIL_USERNAME"), os.getenv("MAIL_PASSWORD"))
+            smtp.send_message(msg)
+        return True
+    except Exception as e:
+        audit("MEMBERSHIP_EMAIL_FAILED", f"to={to_email} error={type(e).__name__}")
+        return False
+
+
+def send_order_email(to_email, order_id, items, total):
+    from email.mime.text import MIMEText
+    lines = "\n".join(
+        f"    {name} x{quantity}  -  ${price * quantity:.2f}"
+        for name, price, quantity in items
+    )
+    msg = MIMEText(
+        "Hello,\n\n"
+        "Thank you for your order at Indoor Cricket Centre!\n\n"
+        f"Order #{order_id}\n\n"
+        f"{lines}\n\n"
+        f"    Total: ${total:.2f} AUD\n\n"
+        "Your gear will be ready to collect at the centre.\n\n"
+        "Indoor Cricket Centre"
+    )
+    msg['Subject'] = f'Order #{order_id} confirmed - Indoor Cricket Centre'
+    msg['From'] = os.getenv("MAIL_USERNAME")
+    msg['To'] = to_email
+    try:
+        with smtplib.SMTP('smtp.gmail.com', 587, timeout=20) as smtp:
+            smtp.starttls()
+            smtp.login(os.getenv("MAIL_USERNAME"), os.getenv("MAIL_PASSWORD"))
+            smtp.send_message(msg)
+        return True
+    except Exception as e:
+        audit("ORDER_EMAIL_FAILED", f"to={to_email} error={type(e).__name__}")
+        return False
 
 
 # Session security settings
@@ -463,7 +539,6 @@ def booking():
     return show_form()
 
 @app.route('/login', methods=['GET', 'POST'])
-@limiter.limit("5 per minute", methods=['POST'])
 def login():
 
     if request.method == 'POST':
@@ -561,6 +636,8 @@ def register():
             """, (full_name, email, hashed_password))
             conn.commit()
             conn.close()
+
+            send_welcome_email(email, full_name)
 
             return render_template(
                 'register.html',
@@ -829,6 +906,7 @@ def membership_payment_success():
         ))
         conn.commit()
         audit("MEMBERSHIP_PURCHASED", f"user={session['user']} plan={plan}")
+        send_membership_email(session['user'], plan, expected_amount / 100, end_date.isoformat())
 
     conn.close()
     session.pop('pending_membership', None)
@@ -1268,14 +1346,22 @@ def shop_payment_success():
     finally:
         conn.close()
 
-    # Clear the shopping cart after successfully saving the order.
-    session.pop('cart', None)
+        session.pop('cart', None)
     session.pop('shop_pending_order', None)
+
+    send_order_email(
+        session['user'],
+        order_id,
+        [(name, price, quantity) for (pid, name, price, quantity) in verified_items],
+        total_cents / 100
+    )
 
     return render_template(
         'shop_payment_success.html',
         order_id=order_id
     )
+# Clear the shopping cart after successfully saving the order.
+
 
 @app.route('/tournament', methods=['GET', 'POST'])
 def tournament():
@@ -1358,6 +1444,14 @@ def admin():
     tournaments = cursor.fetchall()
     cursor.execute("SELECT * FROM contact_messages ORDER BY id DESC")
     messages = cursor.fetchall()
+    
+    cursor.execute("SELECT id, user_email, total, payment_status, order_date FROM shop_orders ORDER BY id DESC")
+    _order_rows = cursor.fetchall()
+    orders = []
+    for _o in _order_rows:
+        cursor.execute("SELECT product_name, quantity FROM shop_order_items WHERE order_id = ?", (_o[0],))
+        _items = ", ".join(f"{_it[0]} x{_it[1]}" for _it in cursor.fetchall())
+        orders.append({'id': _o[0], 'email': _o[1], 'total': _o[2], 'status': _o[3], 'date': _o[4], 'items': _items})
         # Dashboard stats (real numbers)
     duration_prices = {'30 Minutes - $25': 25, '1 Hour - $40': 40, '2 Hours - $75': 75}
     cursor.execute("SELECT duration FROM bookings")
@@ -1377,7 +1471,7 @@ def admin():
 
     conn.close()
 
-    return render_template('admin.html', bookings=bookings, tournaments=tournaments, messages=messages, total_bookings=total_bookings, total_members=total_members, total_revenue=total_revenue)
+    return render_template('admin.html', bookings=bookings, tournaments=tournaments, messages=messages, orders=orders, total_bookings=total_bookings, total_members=total_members, total_revenue=total_revenue)
     
 @app.route('/delete-booking/<int:id>', methods=['POST'])
 @admin_required
@@ -1659,6 +1753,114 @@ def edit_profile():
 
     return render_template('edit_profile.html', user=user)
 
+@app.route('/forgot-password', methods=['GET', 'POST'])
+def forgot_password():
+    if request.method == 'POST':
+        email = request.form.get('email', '').strip().lower()
+
+        import sqlite3
+        conn = sqlite3.connect('indoor_cricket.db')
+        cursor = conn.cursor()
+        cursor.execute("SELECT id FROM users WHERE email = ?", (email,))
+        user = cursor.fetchone()
+
+        if user:
+            token = secrets.token_urlsafe(32)
+            expires_at = (datetime.now() + timedelta(hours=1)).strftime('%Y-%m-%d %H:%M:%S')
+            cursor.execute(
+                "INSERT INTO password_resets (email, token, expires_at) VALUES (?, ?, ?)",
+                (email, token, expires_at)
+            )
+            conn.commit()
+            reset_link = request.url_root.rstrip('/') + '/reset-password/' + token
+            send_reset_email(email, reset_link)
+            audit("RESET_REQUESTED", f"user={email}")
+
+        conn.close()
+        return render_template('forgot_password.html',
+                               message="If that email is registered, a reset link has been sent.")
+
+    return render_template('forgot_password.html')
+
+
+@app.route('/reset-password/<token>', methods=['GET', 'POST'])
+def reset_password(token):
+    import sqlite3
+    conn = sqlite3.connect('indoor_cricket.db')
+    cursor = conn.cursor()
+    cursor.execute(
+        "SELECT email, expires_at FROM password_resets WHERE token = ? ORDER BY id DESC LIMIT 1",
+        (token,)
+    )
+    row = cursor.fetchone()
+
+    valid = False
+    email = None
+    if row:
+        email, expires_at = row
+        try:
+            if datetime.now() < datetime.strptime(expires_at, '%Y-%m-%d %H:%M:%S'):
+                valid = True
+        except ValueError:
+            valid = False
+
+    if not valid:
+        conn.close()
+        return render_template('reset_password.html',
+                               error="This reset link is invalid or has expired.")
+
+    if request.method == 'POST':
+        new_password = request.form.get('new_password', '')
+        confirm_password = request.form.get('confirm_password', '')
+
+        if new_password != confirm_password:
+            conn.close()
+            return render_template('reset_password.html', token=token,
+                                   error="Passwords do not match.")
+        if len(new_password) < 6:
+            conn.close()
+            return render_template('reset_password.html', token=token,
+                                   error="Password must be at least 6 characters.")
+
+        hashed = generate_password_hash(new_password)
+        cursor.execute("UPDATE users SET password = ? WHERE email = ?", (hashed, email))
+        cursor.execute("DELETE FROM password_resets WHERE email = ?", (email,))
+        conn.commit()
+        conn.close()
+        audit("PASSWORD_RESET", f"user={email}")
+        return render_template('reset_password.html',
+                               success="Your password has been reset. You can now log in.")
+
+    conn.close()
+    return render_template('reset_password.html', token=token)
+
+@app.route('/my-orders')
+def my_orders():
+    if 'user' not in session:
+        return redirect('/login')
+
+    import sqlite3
+    conn = sqlite3.connect('indoor_cricket.db')
+    conn.row_factory = sqlite3.Row
+    cursor = conn.cursor()
+
+    cursor.execute(
+        "SELECT id, total, payment_status, order_date FROM shop_orders "
+        "WHERE user_email = ? ORDER BY id DESC",
+        (session['user'],)
+    )
+    orders = cursor.fetchall()
+
+    orders_with_items = []
+    for o in orders:
+        cursor.execute(
+            "SELECT product_name, price, quantity FROM shop_order_items WHERE order_id = ?",
+            (o['id'],)
+        )
+        orders_with_items.append({'order': o, 'items': cursor.fetchall()})
+
+    conn.close()
+    return render_template('my_orders.html', orders=orders_with_items)
 @app.route('/change-password', methods=['GET', 'POST'])
 @limiter.limit("5 per minute", methods=['POST'])
 def change_password():
@@ -1806,4 +2008,4 @@ if __name__ == '__main__':
     app.run(debug=False, threaded=True)
 
     # Test 2 - HTTPS (secure, encrypted):
-   #app.run(debug=False, ssl_context=('cert.pem', 'key.pem'), threaded=True)
+   #app.run(debug=False, ssl_context=('cert.pem', 'key.pem'), threaded=True) 

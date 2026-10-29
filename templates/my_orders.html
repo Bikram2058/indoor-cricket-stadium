@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Orders - Indoor Cricket Centre</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <style>
+        body { background:#071707; color:#fff; font-family:Arial, sans-serif; margin:0; }
+        .wrap { max-width:1000px; margin:50px auto; padding:0 20px 80px; }
+        h1 { color:#64dd24; text-align:center; margin-bottom:10px; }
+        .sub { text-align:center; color:#cfe0c6; margin:0 0 40px; }
+        .order { background:#102b10; border:1px solid #245024; border-radius:14px;
+                 padding:22px 24px; margin-bottom:22px; }
+        .order-head { display:flex; flex-wrap:wrap; align-items:center; gap:12px;
+                      border-bottom:1px solid #245024; padding-bottom:14px; margin-bottom:14px; }
+        .order-head h2 { margin:0; font-size:20px; color:#fff; }
+        .order-head .date { color:#9fc48f; font-size:14px; }
+        .order-head .spacer { flex:1; }
+        .badge { background:#1f7a14; color:#dfffd0; padding:5px 12px; border-radius:20px;
+                 font-size:13px; font-weight:bold; text-transform:capitalize; }
+        .total { color:#64dd24; font-weight:bold; font-size:18px; }
+        table { width:100%; border-collapse:collapse; }
+                th { text-align:left; background:#143a11 !important; color:#eafbe2 !important; font-size:14px; padding:12px 10px; }
+        td { padding:10px; border-bottom:1px solid #16311600; color:#e8f3e2; font-size:15px; }
+        td.num, th.num { text-align:right; }
+        .empty { text-align:center; color:#cfe0c6; background:#102b10; border:1px solid #245024;
+                 border-radius:14px; padding:50px 20px; }
+        .empty a { color:#64dd24; font-weight:bold; text-decoration:none; }
+        .back { display:inline-block; margin-top:10px; color:#64dd24; text-decoration:none; }
+    </style>
+</head>
+<body>
+<header class="topbar">
+    <div class="logo">🏏 INDOOR <span>CRICKET CENTRE</span></div>
+    <nav>
+        <a href="/">Home</a>
+        <a href="/booking">Booking</a>
+        <a href="/membership">Membership</a>
+        <a href="/shop">Shop</a>
+        <a href="/contact">Contact</a>
+        <a href="/dashboard">Dashboard</a>
+        <a class="register-btn" href="/logout">Logout</a>
+    </nav>
+</header>
+
+<div class="wrap">
+    <h1>My Orders</h1>
+    <p class="sub">Gear you've purchased from the shop</p>
+
+    {% if orders %}
+        {% for entry in orders %}
+        <div class="order">
+            <div class="order-head">
+                <h2>Order #{{ entry['order']['id'] }}</h2>
+                <span class="date">{{ entry['order']['order_date'] }}</span>
+                <span class="spacer"></span>
+                <span class="badge">{{ entry['order']['payment_status'] }}</span>
+                <span class="total">${{ '%.2f'|format(entry['order']['total']) }}</span>
+            </div>
+            <table>
+                <tr><th>Item</th><th class="num">Price</th><th class="num">Qty</th><th class="num">Subtotal</th></tr>
+                {% for item in entry['items'] %}
+                <tr>
+                    <td>{{ item['product_name'] }}</td>
+                    <td class="num">${{ '%.2f'|format(item['price']) }}</td>
+                    <td class="num">{{ item['quantity'] }}</td>
+                    <td class="num">${{ '%.2f'|format(item['price'] * item['quantity']) }}</td>
+                </tr>
+                {% endfor %}
+            </table>
+        </div>
+        {% endfor %}
+    {% else %}
+        <div class="empty">
+            <p>You haven't placed any orders yet.</p>
+            <a href="/shop">Browse the shop →</a>
+        </div>
+    {% endif %}
+
+    <div style="text-align:center;">
+        <a class="back" href="/dashboard">← Back to Dashboard</a>
+    </div>
+</div>
+
+    <script src="{{ url_for('static', filename='mobile-nav.js') }}"></script>
+</body>
+</html>

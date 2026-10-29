@@ -61,6 +61,7 @@
   <div class="list">
     <a class="row" href="/profile"><div class="ic">👤</div><div class="txt"><h3>My Profile</h3><p>View and update your personal information.</p></div><span class="arw">→</span></a>
     <a class="row" href="/my-bookings"><div class="ic">📅</div><div class="txt"><h3>My Bookings</h3><p>See your previous and upcoming lane bookings.</p></div><span class="arw">→</span></a>
+        <a class="row" href="/my-orders"><div class="ic">🛍️</div><div class="txt"><h3>My Orders</h3><p>See the gear you've purchased from the shop.</p></div><span class="arw">→</span></a>
     <a class="row" href="/membership"><div class="ic">⭐</div><div class="txt"><h3>My Membership</h3>{% if membership %}<p>Plan: {{ membership['plan'] }} ({{ membership['status'] }}) · valid until {{ membership['end_date'] }}</p>{% else %}<p>Unlock member perks and discounts on bookings.</p>{% endif %}</div><span class="arw">→</span></a>
     <a class="row" href="/booking"><div class="ic">🏏</div><div class="txt"><h3>Book a Lane</h3><p>Reserve your next indoor cricket session.</p></div><span class="arw">→</span></a>
     <a class="row" href="/change-password"><div class="ic">🔒</div><div class="txt"><h3>Change Password</h3><p>Keep your account secure with a new password.</p></div><span class="arw">→</span></a>

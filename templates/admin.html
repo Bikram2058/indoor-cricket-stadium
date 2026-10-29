@@ -179,7 +179,29 @@
             {% endfor %}
         </table>
 
-        
+        <h1>Shop Orders</h1>
+
+        <table>
+            <tr>
+                <th>Order ID</th>
+                <th>Customer</th>
+                <th>Items</th>
+                <th>Total</th>
+                <th>Status</th>
+                <th>Date</th>
+            </tr>
+
+            {% for order in orders %}
+            <tr>
+                <td>{{ order['id'] }}</td>
+                <td>{{ order['email'] }}</td>
+                <td>{{ order['items'] }}</td>
+                <td>${{ '%.2f'|format(order['total']) }}</td>
+                <td>{{ order['status'] }}</td>
+                <td>{{ order['date'] }}</td>
+            </tr>
+            {% endfor %}
+        </table>  
 
     </section>
 
