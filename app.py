@@ -1,4 +1,3 @@
-from dbm import sqlite3
 from functools import wraps
 
 def admin_required(f):
