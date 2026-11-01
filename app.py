@@ -57,6 +57,21 @@ def generate_booking_code():
     parts = [secrets.token_hex(2).upper() for _ in range(3)]
     return "ICC-" + "-".join(parts)
 
+import threading
+
+def _send_email_async(msg, fail_tag, to_email):
+    # Sends an already-built email in a background thread so the web page
+    # returns instantly. If it fails, it's recorded in the audit log.
+    def _worker():
+        try:
+            with smtplib.SMTP('smtp.gmail.com', 587, timeout=20) as smtp:
+                smtp.starttls()
+                smtp.login(os.getenv("MAIL_USERNAME"), os.getenv("MAIL_PASSWORD"))
+                smtp.send_message(msg)
+        except Exception as e:
+            audit(fail_tag, f"to={to_email} error={type(e).__name__}")
+    threading.Thread(target=_worker, daemon=True).start()
+
 def send_booking_email(to_email, booking, code):
     msg = EmailMessage()
     msg['Subject'] = f"Booking Confirmed - {code} - Indoor Cricket Centre"
@@ -80,15 +95,8 @@ If you did not make this booking, please contact us immediately.
 
 Indoor Cricket Centre
 """)
-    try:
-            with smtplib.SMTP('smtp.gmail.com', 587, timeout=20) as smtp:
-                smtp.starttls()
-                smtp.login(os.getenv("MAIL_USERNAME"), os.getenv("MAIL_PASSWORD"))
-                smtp.send_message(msg)
-            return True
-    except Exception as e:
-            audit("EMAIL_FAILED", f"to={to_email} error={type(e).__name__}")
-            return False
+    _send_email_async(msg, "EMAIL_FAILED", to_email)
+    return True
 
 def send_login_email(to_email):
     from email.mime.text import MIMEText
@@ -105,16 +113,8 @@ def send_login_email(to_email):
     msg['Subject'] = 'New login to your account'
     msg['From'] = os.getenv("MAIL_USERNAME")
     msg['To'] = to_email
-
-    try:
-        with smtplib.SMTP('smtp.gmail.com', 587, timeout=20) as smtp:
-            smtp.starttls()
-            smtp.login(os.getenv("MAIL_USERNAME"), os.getenv("MAIL_PASSWORD"))
-            smtp.send_message(msg)
-        return True
-    except Exception as e:
-        audit("LOGIN_EMAIL_FAILED", f"to={to_email} error={type(e).__name__}")
-        return False
+    _send_email_async(msg, "LOGIN_EMAIL_FAILED", to_email)
+    return True
 
 def send_reset_email(to_email, reset_link):
     from email.mime.text import MIMEText
@@ -129,17 +129,9 @@ def send_reset_email(to_email, reset_link):
     msg['Subject'] = 'Reset your password'
     msg['From'] = os.getenv("MAIL_USERNAME")
     msg['To'] = to_email
+    _send_email_async(msg, "RESET_EMAIL_FAILED", to_email)
+    return True
 
-    try:
-        with smtplib.SMTP('smtp.gmail.com', 587, timeout=20) as smtp:
-            smtp.starttls()
-            smtp.login(os.getenv("MAIL_USERNAME"), os.getenv("MAIL_PASSWORD"))
-            smtp.send_message(msg)
-        return True
-    except Exception as e:
-        audit("RESET_EMAIL_FAILED", f"to={to_email} error={type(e).__name__}")
-        return False
-    
 def send_welcome_email(to_email, full_name):
     from email.mime.text import MIMEText
     msg = MIMEText(
@@ -152,15 +144,8 @@ def send_welcome_email(to_email, full_name):
     msg['Subject'] = 'Welcome to Indoor Cricket Centre'
     msg['From'] = os.getenv("MAIL_USERNAME")
     msg['To'] = to_email
-    try:
-        with smtplib.SMTP('smtp.gmail.com', 587, timeout=20) as smtp:
-            smtp.starttls()
-            smtp.login(os.getenv("MAIL_USERNAME"), os.getenv("MAIL_PASSWORD"))
-            smtp.send_message(msg)
-        return True
-    except Exception as e:
-        audit("WELCOME_EMAIL_FAILED", f"to={to_email} error={type(e).__name__}")
-        return False
+    _send_email_async(msg, "WELCOME_EMAIL_FAILED", to_email)
+    return True
 
 
 def send_membership_email(to_email, plan, price, end_date):
@@ -177,15 +162,8 @@ def send_membership_email(to_email, plan, price, end_date):
     msg['Subject'] = f'Your {plan} membership is active'
     msg['From'] = os.getenv("MAIL_USERNAME")
     msg['To'] = to_email
-    try:
-        with smtplib.SMTP('smtp.gmail.com', 587, timeout=20) as smtp:
-            smtp.starttls()
-            smtp.login(os.getenv("MAIL_USERNAME"), os.getenv("MAIL_PASSWORD"))
-            smtp.send_message(msg)
-        return True
-    except Exception as e:
-        audit("MEMBERSHIP_EMAIL_FAILED", f"to={to_email} error={type(e).__name__}")
-        return False
+    _send_email_async(msg, "MEMBERSHIP_EMAIL_FAILED", to_email)
+    return True
 
 
 def send_order_email(to_email, order_id, items, total):
@@ -206,15 +184,8 @@ def send_order_email(to_email, order_id, items, total):
     msg['Subject'] = f'Order #{order_id} confirmed - Indoor Cricket Centre'
     msg['From'] = os.getenv("MAIL_USERNAME")
     msg['To'] = to_email
-    try:
-        with smtplib.SMTP('smtp.gmail.com', 587, timeout=20) as smtp:
-            smtp.starttls()
-            smtp.login(os.getenv("MAIL_USERNAME"), os.getenv("MAIL_PASSWORD"))
-            smtp.send_message(msg)
-        return True
-    except Exception as e:
-        audit("ORDER_EMAIL_FAILED", f"to={to_email} error={type(e).__name__}")
-        return False
+    _send_email_async(msg, "ORDER_EMAIL_FAILED", to_email)
+    return True
 
 
 # Session security settings
